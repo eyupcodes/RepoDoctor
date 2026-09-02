@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "repodoctor"
+version = "0.1.0"
+description = "Repository health and hygiene checks from the terminal."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+  "rich>=14,<15",
+  "typer>=0.21,<1",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=9,<10",
+  "pytest-cov>=7,<8",
+  "ruff>=0.13,<1",
+]
+
+[project.scripts]
+repodoctor = "repodoctor.cli:app"
+
+[tool.pytest.ini_options]
+addopts = ["--import-mode=importlib", "-ra", "--strict-config"]
+testpaths = ["tests"]
+
+[tool.coverage.run]
+branch = true
+source = ["repodoctor"]
+
+[tool.coverage.report]
+fail_under = 80
+show_missing = true
+
+[tool.ruff]
+target-version = "py312"
+line-length = 88
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]
