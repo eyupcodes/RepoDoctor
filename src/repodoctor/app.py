@@ -1,17 +1,16 @@
-from dataclasses import dataclass
-from pathlib import Path
-
+from repodoctor.checks import evaluate_repository
 from repodoctor.config import RepoDoctorConfig
-
-
-@dataclass(frozen=True, slots=True)
-class RunResult:
-    target: Path
-    passed_checks: tuple[str, ...] = ()
-    warnings: tuple[str, ...] = ()
-    failures: tuple[str, ...] = ()
+from repodoctor.models import RunResult
+from repodoctor.scanner import scan_repository
+from repodoctor.scoring import calculate_health_score
 
 
 def run(config: RepoDoctorConfig) -> RunResult:
-    """Prepare a validated repository target for future scans."""
-    return RunResult(target=config.target)
+    """Scan a repository and return deterministic health results."""
+    snapshot = scan_repository(config.target)
+    checks = evaluate_repository(snapshot)
+    return RunResult(
+        target=config.target,
+        checks=checks,
+        score=calculate_health_score(checks),
+    )

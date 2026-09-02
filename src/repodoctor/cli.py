@@ -3,10 +3,10 @@ from typing import Annotated
 
 import typer
 from rich.console import Console
-from rich.text import Text
 
 from repodoctor.app import run
 from repodoctor.config import ConfigError, RepoDoctorConfig
+from repodoctor.report import render_report
 
 app = typer.Typer(
     help="Check repository health, structure, and security hygiene.",
@@ -34,6 +34,6 @@ def check(
         raise typer.Exit(code=2) from error
 
     result = run(config)
-    message = Text("Foundation ready: ", style="green")
-    message.append(str(result.target))
-    Console().print(message, soft_wrap=True)
+    render_report(result, Console())
+    if result.warnings or result.failures:
+        raise typer.Exit(code=1)

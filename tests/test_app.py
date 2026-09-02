@@ -1,13 +1,22 @@
 from repodoctor.app import run
 from repodoctor.config import RepoDoctorConfig
+from tests.helpers import make_healthy_repository
 
 
-def test_run_returns_foundation_result_for_target(tmp_path):
-    config = RepoDoctorConfig.from_target(tmp_path)
+def test_run_returns_healthy_result(tmp_path):
+    make_healthy_repository(tmp_path)
 
-    result = run(config)
+    result = run(RepoDoctorConfig.from_target(tmp_path))
 
     assert result.target == tmp_path.resolve()
-    assert result.passed_checks == ()
+    assert result.score == 100
+    assert len(result.passed_checks) == 6
     assert result.warnings == ()
     assert result.failures == ()
+
+
+def test_run_returns_failures_for_empty_repository(tmp_path):
+    result = run(RepoDoctorConfig.from_target(tmp_path))
+
+    assert result.score == 25
+    assert len(result.failures) == 5

@@ -18,6 +18,9 @@ htmlcov/
 .pytest_cache/
 .ruff_cache/
 
+# Local tooling
+.claude/
+
 # Editors and OS
 .vscode/
 .idea/
