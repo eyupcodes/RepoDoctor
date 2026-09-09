@@ -1,0 +1,9 @@
+Repository: examples/healthy-repository
+Score: 100/100
+PASS  readme — Found README file.
+PASS  license — Found license file.
+PASS  gitignore — Found .gitignore file.
+PASS  tests — Found test directory.
+PASS  ci — Found CI workflow.
+PASS  secret-risk — No secret risks found.
+Summary: 6 passed, 0 warnings, 0 failed

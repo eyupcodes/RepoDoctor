@@ -4,6 +4,7 @@ from typing import Annotated
 import typer
 from rich.console import Console
 
+from repodoctor import __version__
 from repodoctor.app import run
 from repodoctor.config import ConfigError, RepoDoctorConfig
 from repodoctor.report import render_report
@@ -14,8 +15,25 @@ app = typer.Typer(
 )
 
 
+def _version_callback(value: bool) -> None:
+    if value:
+        typer.echo(f"repodoctor {__version__}")
+        raise typer.Exit()
+
+
 @app.callback()
-def main() -> None:
+def main(
+    version: Annotated[
+        bool,
+        typer.Option(
+            "--version",
+            "-v",
+            help="Show version and exit.",
+            callback=_version_callback,
+            is_eager=True,
+        ),
+    ] = False,
+) -> None:
     """Run repository health checks."""
 
 

@@ -85,11 +85,17 @@ def scan_repository(target: Path) -> RepositorySnapshot:
             directory_names.clear()
             break
         root_path = Path(root)
-        directory_names[:] = sorted(
-            name
-            for name in directory_names
-            if name not in EXCLUDED_DIRECTORIES and not (root_path / name).is_symlink()
-        )
+        valid_dirs: list[str] = []
+        for name in directory_names:
+            if name in EXCLUDED_DIRECTORIES:
+                continue
+            try:
+                if (root_path / name).is_symlink():
+                    continue
+            except OSError:
+                pass
+            valid_dirs.append(name)
+        directory_names[:] = sorted(valid_dirs)
         for name in directory_names:
             directories.append(
                 _sanitize_relative_path(
@@ -106,17 +112,19 @@ def scan_repository(target: Path) -> RepositorySnapshot:
                 directory_names.clear()
                 break
             path = root_path / name
-            if path.is_symlink():
-                continue
             relative_path = path.relative_to(target).as_posix()
             sanitized_relative = _sanitize_relative_path(relative_path)
-            files.append(sanitized_relative)
 
             try:
+                if path.is_symlink():
+                    continue
                 file_size = path.stat().st_size
             except OSError:
+                files.append(sanitized_relative)
                 diagnostics.append(sanitized_relative)
                 continue
+
+            files.append(sanitized_relative)
 
             # Oversized files get their own diagnostic and do not count toward total.
             if file_size > MAX_FILE_SIZE:

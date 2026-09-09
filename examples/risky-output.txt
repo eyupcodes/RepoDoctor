@@ -1,0 +1,10 @@
+Repository: examples/risky-repository
+Score: 0/100
+PASS  readme — Found README file.
+FAIL  license — Missing license file.
+FAIL  gitignore — Missing .gitignore file.
+FAIL  tests — Missing test directory.
+FAIL  ci — Missing CI workflow.
+FAIL  secret-risk — Found 1 potential secret risk(s).
+       config.txt:1 (credential assignment)
+Summary: 1 passed, 0 warnings, 5 failed

@@ -1,0 +1,40 @@
+name: Bug Report
+description: Report an unexpected error, incorrect scan result, or false positive
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting an issue! Please do NOT include real secrets or tokens in your report.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Describe what you observed versus what you expected.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: Steps or repository structure to reproduce the behavior.
+      placeholder: |
+        1. Run `repodoctor check <path>`
+        2. Observed output ...
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: RepoDoctor Version
+      description: Output of `repodoctor --version`
+      placeholder: "0.1.0"
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: Operating System & Python Version
+      placeholder: "Ubuntu 22.04 / Python 3.12"
+    validations:
+      required: true

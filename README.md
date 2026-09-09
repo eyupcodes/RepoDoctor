@@ -1,27 +1,54 @@
 # RepoDoctor
 
-RepoDoctor is a Python CLI for checking repository health, structure, and security hygiene. It helps catch missing project essentials and risky files before publication.
+Deterministic repository health, structure, and security hygiene analyzer CLI.
 
-> Current status: M2 core scanner.
+[![CI](https://github.com/eyupcodes/RepoDoctor/actions/workflows/ci.yml/badge.svg)](https://github.com/eyupcodes/RepoDoctor/actions/workflows/ci.yml)
+[![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
 
-## Requirements
+---
 
-- Python 3.12+
+## 1. What does RepoDoctor do?
 
-## Quick Start
+RepoDoctor inspects local Git repositories and codebases from your terminal to verify essential structural files, test suites, continuous integration configurations, and secret hygiene before publishing or deploying code.
+
+It scores repositories on a deterministic scale (0 to 100) and produces structured terminal reports with actionable failure locations.
+
+## 2. Why does it exist?
+
+Small projects, MVPs, and rapid prototypes frequently miss foundational quality safeguards—such as licenses, `.gitignore` entries, test directories, or CI pipelines—and accidentally leak environment files, API keys, or private SSH/TLS keys.
+
+RepoDoctor automates these baseline audits into a single zero-network, read-only terminal command.
+
+## 3. 30-Second Quickstart
+
+### Installation
 
 ```bash
 python -m venv .venv
 # Windows: .venv\Scripts\activate
 # macOS/Linux: source .venv/bin/activate
-python -m pip install -e .
-repodoctor check .
+pip install -e .
 ```
 
-Example healthy output:
+### Run Check
+
+```bash
+# Check current directory
+repodoctor check .
+
+# Check specific repository path
+repodoctor check path/to/repo
+
+# Display version
+repodoctor --version
+```
+
+## 4. Example Output
+
+### Healthy Repository (Score: 100/100, Exit code: 0)
 
 ```text
-Repository: /path/to/repository
+Repository: examples/healthy-repository
 Score: 100/100
 PASS  readme — Found README file.
 PASS  license — Found license file.
@@ -32,42 +59,85 @@ PASS  secret-risk — No secret risks found.
 Summary: 6 passed, 0 warnings, 0 failed
 ```
 
-Try both included examples:
+### Risky Repository (Score: 0/100, Exit code: 1)
+
+```text
+Repository: examples/risky-repository
+Score: 0/100
+PASS  readme — Found README file.
+FAIL  license — Missing license file.
+FAIL  gitignore — Missing .gitignore file.
+FAIL  tests — Missing test directory.
+FAIL  ci — Missing CI workflow.
+FAIL  secret-risk — Found 1 potential secret risk(s).
+       config.txt:1 (credential assignment)
+Summary: 1 passed, 0 warnings, 5 failed
+```
+
+Run the built-in examples directly:
 
 ```bash
 repodoctor check examples/healthy-repository
 repodoctor check examples/risky-repository
 ```
 
-Exit code `0` means all checks passed, `1` means findings were reported, and `2` means the target was invalid.
+---
 
-## Development
+## Checks & Scoring
+
+| Check ID | Description | Pass Condition | Failure Penalty |
+|----------|-------------|----------------|-----------------|
+| `readme` | Project documentation | Exact root file: `README`, `README.md`, `README.txt`, `README.rst` | -15 |
+| `license` | Open source / project license | Exact root file: `LICENSE`, `LICENCE`, `LICENSE.md`, `LICENSE.txt` | -15 |
+| `gitignore` | VCS ignore patterns | Root `.gitignore` exists | -15 |
+| `tests` | Automated test suite | Root directory `tests/`, `test/`, or `__tests__/` exists | -15 |
+| `ci` | Continuous integration | Active workflow in `.github/workflows/*.yml` or `*.yaml` | -15 |
+| `secret-risk` | Secret & credential hygiene | Zero matched API keys, tokens, or private keys; uninspected files trigger warnings (-5) | -40 |
+
+**Score calculation:** `max(0, 100 - sum(penalties))`.
+
+### Exit Codes
+
+| Exit Code | Meaning |
+|-----------|---------|
+| `0` | All checks passed (healthy repository, score: 100) |
+| `1` | One or more warnings or check failures detected |
+| `2` | Configuration error, missing target, or target is not a directory |
+
+---
+
+## Safety & Hardening Architecture
+
+RepoDoctor is strictly **read-only** and bounded against common static analysis attack vectors and resource exhaustion:
+
+- **No Value Leakage:** Matched credentials or private keys are never stored, logged, or printed. Output only notes `<path>:<line> (<risk class>)`.
+- **ANSI & Control Character Sanitization:** File paths and summary lines sanitize terminal escape sequences (`\x1b`) and C0 control codes to prevent terminal injection attacks.
+- **Symlink Protection:** Directory and file symlinks are never traversed, preventing infinite recursion loops and out-of-boundary file reads.
+- **Resource Bounds:**
+  - Max file size: 1 MiB per file (oversized files flagged as diagnostics)
+  - Max text lines: 10,000 lines inspected per file
+  - Max cumulative bytes: 8 MiB per scan to prevent RAM exhaustion
+  - Max files: 10,000 files indexed
+- **Binary File Skipping:** Files containing NUL bytes (`\x00`) are safely skipped without Unicode decode exceptions.
+- **Excluded Directories:** Standard dependency and cache folders (`.git`, `node_modules`, `.venv`, `dist`, `__pycache__`, etc.) are skipped by default.
+
+---
+
+## Development & Testing
 
 ```bash
-python -m pip install -e ".[dev]"
-ruff format --check .
+# Install with development dependencies
+pip install -e ".[dev]"
+
+# Lint and format checks
 ruff check .
+ruff format --check .
+
+# Run test suite with branch coverage enforcement (>= 80%)
 pytest --cov=repodoctor --cov-branch --cov-fail-under=80
 ```
 
-You can also run the CLI as a module:
-
-```bash
-python -m repodoctor --help
-python -m repodoctor check .
-```
-
-## MVP Checks
-
-- Root `README`, `LICENSE`, and `.gitignore`
-- Test directory detection
-- GitHub Actions workflow detection
-- Environment and secret-risk pattern scan with value redaction
-- Deterministic health score and terminal report
-
-RepoDoctor skips symlinks, common dependency/cache/build directories, binary files, and files larger than 1 MiB. It never reports a matched credential value.
-
-See [`PROJECT.md`](PROJECT.md) for scope and milestones.
+---
 
 ## License
 
