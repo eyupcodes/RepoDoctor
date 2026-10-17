@@ -33,9 +33,7 @@ def test_private_key_detected_in_file(tmp_path):
 def test_rsa_and_openssh_private_keys_detected(tmp_path):
     make_healthy_repository(tmp_path)
     (tmp_path / "id_rsa").write_text(
-        "-----BEGIN RSA PRIVATE KEY-----\n"
-        "fake\n"
-        "-----END RSA PRIVATE KEY-----\n",
+        "-----BEGIN RSA PRIVATE KEY-----\nfake\n-----END RSA PRIVATE KEY-----\n",
         encoding="utf-8",
     )
     (tmp_path / "id_ed25519").write_text(
