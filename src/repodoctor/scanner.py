@@ -145,12 +145,7 @@ def scan_repository(target: Path) -> RepositorySnapshot:
                 total_bytes += file_size
                 contents.append(content)
             elif diagnostic is not None:
-                if diagnostic.endswith("(file too large)"):
-                    diagnostics.append(diagnostic)
-                elif diagnostic.endswith("(directory access error)"):
-                    diagnostics.append(diagnostic)
-                else:
-                    diagnostics.append(diagnostic)
+                diagnostics.append(diagnostic)
             else:
                 total_bytes += file_size
 
