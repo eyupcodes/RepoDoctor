@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- MIT license, declared in package metadata (#7).
+
 ### Changed
 
 - Added tests for scanner failure handling (unreadable files and directories, byte limit, non-UTF-8 and binary files) and the `python -m repodoctor` entry point; removed a redundant diagnostic branch (#5).
