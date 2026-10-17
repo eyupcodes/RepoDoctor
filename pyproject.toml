@@ -7,6 +7,8 @@ name = "repodoctor"
 version = "0.1.0"
 description = "Repository health and hygiene checks from the terminal."
 readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
 requires-python = ">=3.12"
 dependencies = [
   "rich>=14,<15",

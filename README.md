@@ -141,4 +141,4 @@ pytest --cov=repodoctor --cov-branch --cov-fail-under=80
 
 ## License
 
-License selection requires project-owner approval. No license has been applied yet.
+RepoDoctor is released under the [MIT License](LICENSE).
