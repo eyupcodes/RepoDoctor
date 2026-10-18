@@ -92,7 +92,7 @@ repodoctor check examples/risky-repository
 | `gitignore` | VCS ignore patterns | Root `.gitignore` exists | -15 |
 | `tests` | Automated test suite | Root directory `tests/`, `test/`, or `__tests__/` exists | -15 |
 | `ci` | Continuous integration | Active workflow in `.github/workflows/*.yml` or `*.yaml` | -15 |
-| `secret-risk` | Secret & credential hygiene | Zero matched API keys, tokens, or private keys; uninspected files trigger warnings (-5) | -40 |
+| `secret-risk` | Secret & credential hygiene | Zero matched private keys, secret-named assignments, or well-known token formats (GitHub, AWS, Slack, Stripe, Google, LLM API keys); uninspected files trigger warnings (-5) | -40 |
 
 **Score calculation:** `max(0, 100 - sum(penalties))`.
 
