@@ -74,6 +74,16 @@ FAIL  secret-risk — Found 1 potential secret risk(s).
 Summary: 1 passed, 0 warnings, 5 failed
 ```
 
+Add `--json` to print the result as a single JSON object (score, summary counts and every check) for scripts and CI. Exit codes do not change, and like the terminal report it only contains `<path>:<line> (<risk class>)`, never the matched value:
+
+```bash
+repodoctor check . --json
+```
+
+```json
+{"target": "/path/to/repo", "score": 85, "summary": {"passed": 5, "warnings": 0, "failed": 1}, "checks": [{"id": "readme", "status": "PASS", "summary": "Found README file.", "paths": []}]}
+```
+
 Run the built-in examples directly:
 
 ```bash
