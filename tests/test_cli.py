@@ -1,3 +1,5 @@
+import json
+
 from typer.testing import CliRunner
 
 from repodoctor.cli import app
@@ -53,3 +55,36 @@ def test_check_rejects_file(tmp_path):
 
     assert result.exit_code == 2
     assert "not a directory" in result.stdout
+
+
+def test_json_output_for_healthy_repository(tmp_path):
+    make_healthy_repository(tmp_path)
+
+    result = runner.invoke(app, ["check", str(tmp_path), "--json"])
+
+    assert result.exit_code == 0
+    data = json.loads(result.stdout)
+    assert data["score"] == 100
+    assert data["summary"] == {"passed": 6, "warnings": 0, "failed": 0}
+    assert [check["id"] for check in data["checks"]][-1] == "secret-risk"
+    assert "Score:" not in result.stdout
+
+
+def test_json_output_keeps_exit_code_and_hides_secret_values(tmp_path):
+    (tmp_path / "config.txt").write_text("API_KEY=hunter2hunter2\n", encoding="utf-8")
+
+    result = runner.invoke(app, ["check", str(tmp_path), "--json"])
+
+    assert result.exit_code == 1
+    data = json.loads(result.stdout)
+    secret = next(c for c in data["checks"] if c["id"] == "secret-risk")
+    assert secret["status"] == "FAIL"
+    assert secret["paths"] == ["config.txt:1 (credential assignment)"]
+    assert "hunter2" not in result.stdout
+
+
+def test_json_flag_does_not_hide_config_errors(tmp_path):
+    result = runner.invoke(app, ["check", str(tmp_path / "missing"), "--json"])
+
+    assert result.exit_code == 2
+    assert "does not exist" in result.stdout
