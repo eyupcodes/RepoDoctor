@@ -64,6 +64,16 @@ CREDENTIAL_PATTERN = re.compile(
     re.IGNORECASE,
 )
 PRIVATE_KEY_PATTERN = re.compile(r"-----BEGIN (?:[A-Z0-9 ]+ )?PRIVATE KEY-----")
+# Provider token formats distinctive enough to flag wherever they appear on a line.
+KNOWN_TOKEN_PATTERN = re.compile(
+    r"\bgh[pousr]_[A-Za-z0-9]{36,}\b"
+    r"|\bgithub_pat_[A-Za-z0-9_]{50,}\b"
+    r"|\b(?:AKIA|ASIA)[0-9A-Z]{16}\b"
+    r"|\bxox[abprs]-[A-Za-z0-9-]{10,}"
+    r"|\b[sr]k_live_[A-Za-z0-9]{16,}\b"
+    r"|\bAIza[0-9A-Za-z_-]{35}\b"
+    r"|\bsk-(?:ant-)?[A-Za-z0-9_-]{32,}"
+)
 PLACEHOLDERS = re.compile(
     r"^(?:example|changeme|placeholder|your[_-].*|<.*>|\$\{?\w+\}?)$", re.IGNORECASE
 )
@@ -88,9 +98,12 @@ def _secret_result(snapshot: RepositorySnapshot) -> CheckResult:
     for content in snapshot.contents:
         for line_number, line in enumerate(content.lines, start=1):
             private_key = PRIVATE_KEY_PATTERN.search(line)
+            known_token = KNOWN_TOKEN_PATTERN.search(line)
             credential = CREDENTIAL_PATTERN.search(line)
             if private_key:
                 findings.append(f"{content.path}:{line_number} (private key)")
+            elif known_token:
+                findings.append(f"{content.path}:{line_number} (known token format)")
             elif credential and not PLACEHOLDERS.match(credential.group(1)):
                 findings.append(f"{content.path}:{line_number} (credential assignment)")
 
