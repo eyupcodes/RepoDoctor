@@ -125,3 +125,25 @@ def test_ordinary_text_is_not_mistaken_for_a_token(tmp_path):
     )
 
     assert evaluate_repository(scan_repository(tmp_path))[-1].status is CheckStatus.PASS
+
+
+def test_placeholder_tokens_are_not_risks(tmp_path):
+    make_healthy_repository(tmp_path)
+    (tmp_path / "docs.md").write_text(
+        "Example: gh" + "p_" + "x" * 36 + "\nSample id AK" + "IA" + "0" * 16 + "\n",
+        encoding="utf-8",
+    )
+
+    assert evaluate_repository(scan_repository(tmp_path))[-1].status is CheckStatus.PASS
+
+
+def test_real_token_after_a_placeholder_on_the_same_line_is_still_flagged(tmp_path):
+    make_healthy_repository(tmp_path)
+    placeholder = "gh" + "p_" + "x" * 36
+    (tmp_path / "docs.md").write_text(
+        f"{placeholder} {_fake_tokens()['github']}\n", encoding="utf-8"
+    )
+
+    secret_check = evaluate_repository(scan_repository(tmp_path))[-1]
+
+    assert secret_check.paths == ("docs.md:1 (known token format)",)

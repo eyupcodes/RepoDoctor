@@ -79,6 +79,11 @@ PLACEHOLDERS = re.compile(
 )
 
 
+def _is_placeholder_token(token: str) -> bool:
+    """Treat tokens with almost no character variety (``ghp_xxxx...``) as examples."""
+    return len(set(token)) < 10
+
+
 def _structural_results(snapshot: RepositorySnapshot) -> tuple[CheckResult, ...]:
     results = []
     for identifier, label, predicate in STRUCTURAL_CHECKS:
@@ -98,7 +103,14 @@ def _secret_result(snapshot: RepositorySnapshot) -> CheckResult:
     for content in snapshot.contents:
         for line_number, line in enumerate(content.lines, start=1):
             private_key = PRIVATE_KEY_PATTERN.search(line)
-            known_token = KNOWN_TOKEN_PATTERN.search(line)
+            known_token = next(
+                (
+                    m
+                    for m in KNOWN_TOKEN_PATTERN.finditer(line)
+                    if not _is_placeholder_token(m.group())
+                ),
+                None,
+            )
             credential = CREDENTIAL_PATTERN.search(line)
             if private_key:
                 findings.append(f"{content.path}:{line_number} (private key)")
