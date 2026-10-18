@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 from typing import Annotated
 
@@ -7,7 +8,7 @@ from rich.console import Console
 from repodoctor import __version__
 from repodoctor.app import run
 from repodoctor.config import ConfigError, RepoDoctorConfig
-from repodoctor.report import render_report
+from repodoctor.report import render_report, result_to_dict
 
 app = typer.Typer(
     help="Check repository health, structure, and security hygiene.",
@@ -43,6 +44,10 @@ def check(
         Path | None,
         typer.Argument(help="Repository directory to check."),
     ] = None,
+    as_json: Annotated[
+        bool,
+        typer.Option("--json", help="Print the result as one JSON object."),
+    ] = False,
 ) -> None:
     """Validate a repository target for analysis."""
     try:
@@ -52,6 +57,9 @@ def check(
         raise typer.Exit(code=2) from error
 
     result = run(config)
-    render_report(result, Console())
+    if as_json:
+        typer.echo(json.dumps(result_to_dict(result), ensure_ascii=True))
+    else:
+        render_report(result, Console())
     if result.warnings or result.failures:
         raise typer.Exit(code=1)

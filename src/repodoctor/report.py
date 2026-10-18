@@ -42,3 +42,25 @@ def render_report(result: RunResult, console: Console) -> None:
         f"Summary: {len(result.passed_checks)} passed, "
         f"{len(result.warnings)} warnings, {len(result.failures)} failed"
     )
+
+
+def result_to_dict(result: RunResult) -> dict[str, object]:
+    """Return a JSON-serializable view of a run, without any matched secret values."""
+    return {
+        "target": str(result.target),
+        "score": result.score,
+        "summary": {
+            "passed": len(result.passed_checks),
+            "warnings": len(result.warnings),
+            "failed": len(result.failures),
+        },
+        "checks": [
+            {
+                "id": check.id,
+                "status": check.status.value,
+                "summary": check.summary,
+                "paths": list(check.paths),
+            }
+            for check in result.checks
+        ],
+    }
