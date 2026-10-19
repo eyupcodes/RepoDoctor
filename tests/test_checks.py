@@ -147,3 +147,39 @@ def test_real_token_after_a_placeholder_on_the_same_line_is_still_flagged(tmp_pa
     secret_check = evaluate_repository(scan_repository(tmp_path))[-1]
 
     assert secret_check.paths == ("docs.md:1 (known token format)",)
+
+
+def _secret_paths(tmp_path, name: str, line: str) -> tuple[str, ...]:
+    make_healthy_repository(tmp_path)
+    (tmp_path / name).write_text(line + "\n", encoding="utf-8")
+    return evaluate_repository(scan_repository(tmp_path))[-1].paths
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        "DB_PASSWORD=hunter2",
+        'password = "abc123xyz"',
+        'password = "get_password()"',
+        "client_secret: s3cr3tvalue",
+    ],
+)
+def test_hardcoded_credentials_are_still_risks(tmp_path, line):
+    assert _secret_paths(tmp_path, "settings.txt", line) == (
+        "settings.txt:1 (credential assignment)",
+    )
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        "GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}",
+        'api_key = os.environ["API_KEY"]',
+        'password = os.getenv("PW")',
+        "token = get_token()",
+        "token: str = None",
+        "password=None",
+    ],
+)
+def test_secret_references_are_not_risks(tmp_path, line):
+    assert _secret_paths(tmp_path, "settings.txt", line) == ()

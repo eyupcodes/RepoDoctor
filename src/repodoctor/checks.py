@@ -79,6 +79,23 @@ PLACEHOLDERS = re.compile(
 )
 
 
+# Unquoted right-hand sides that reference a secret instead of containing one:
+# GitHub Actions expressions, calls and subscripts (``os.getenv(``, ``os.environ[``),
+# null/boolean literals and bare type annotations (``token: str = None``).
+REFERENCE_VALUE = re.compile(
+    r"\$\{\{|[A-Za-z_][\w.]*\s*[(\[]|(?:none|null|nil|true|false|str|int|bool|bytes)\b",
+    re.IGNORECASE,
+)
+
+
+def _is_reference(line: str, credential: re.Match[str]) -> bool:
+    """True when the assigned value is a code/config reference rather than a literal."""
+    start = credential.start(1)
+    if start > 0 and line[start - 1] in "\"'":
+        return False
+    return REFERENCE_VALUE.match(line, start) is not None
+
+
 def _is_placeholder_token(token: str) -> bool:
     """Treat tokens with almost no character variety (``ghp_xxxx...``) as examples."""
     return len(set(token)) < 10
@@ -116,7 +133,11 @@ def _secret_result(snapshot: RepositorySnapshot) -> CheckResult:
                 findings.append(f"{content.path}:{line_number} (private key)")
             elif known_token:
                 findings.append(f"{content.path}:{line_number} (known token format)")
-            elif credential and not PLACEHOLDERS.match(credential.group(1)):
+            elif (
+                credential
+                and not PLACEHOLDERS.match(credential.group(1))
+                and not _is_reference(line, credential)
+            ):
                 findings.append(f"{content.path}:{line_number} (credential assignment)")
 
     if findings:

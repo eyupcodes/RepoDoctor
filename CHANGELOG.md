@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- `secret-risk` no longer flags secret references as credential assignments: GitHub Actions `${{ ... }}` expressions, calls and subscripts like `os.getenv(...)` / `os.environ[...]`, `None`/`null`/boolean literals and bare type annotations. Quoted and literal values are still reported (#13).
+
 ### Added
 
 - `repodoctor check --json` prints the score, summary counts and every check as one JSON object; exit codes are unchanged (#11).
