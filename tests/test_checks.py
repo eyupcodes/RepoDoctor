@@ -168,3 +168,18 @@ def test_hardcoded_credentials_are_still_risks(tmp_path, line):
     assert _secret_paths(tmp_path, "settings.txt", line) == (
         "settings.txt:1 (credential assignment)",
     )
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        "GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}",
+        'api_key = os.environ["API_KEY"]',
+        'password = os.getenv("PW")',
+        "token = get_token()",
+        "token: str = None",
+        "password=None",
+    ],
+)
+def test_secret_references_are_not_risks(tmp_path, line):
+    assert _secret_paths(tmp_path, "settings.txt", line) == ()
