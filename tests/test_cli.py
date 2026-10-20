@@ -44,7 +44,8 @@ def test_check_preserves_markup_like_characters_in_target(tmp_path):
 def test_check_rejects_missing_directory(tmp_path):
     result = runner.invoke(app, ["check", str(tmp_path / "missing")])
     assert result.exit_code == 2
-    assert "does not exist" in result.stdout
+    assert "does not exist" in result.stderr
+    assert result.stdout == ""
 
 
 def test_check_rejects_file(tmp_path):
@@ -54,7 +55,8 @@ def test_check_rejects_file(tmp_path):
     result = runner.invoke(app, ["check", str(target)])
 
     assert result.exit_code == 2
-    assert "not a directory" in result.stdout
+    assert "not a directory" in result.stderr
+    assert result.stdout == ""
 
 
 def test_json_output_for_healthy_repository(tmp_path):
@@ -87,4 +89,5 @@ def test_json_flag_does_not_hide_config_errors(tmp_path):
     result = runner.invoke(app, ["check", str(tmp_path / "missing"), "--json"])
 
     assert result.exit_code == 2
-    assert "does not exist" in result.stdout
+    assert "does not exist" in result.stderr
+    assert result.stdout == ""
