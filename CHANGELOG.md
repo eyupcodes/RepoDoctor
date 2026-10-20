@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `repodoctor check` prints invalid-target errors to stderr instead of stdout, so `--json` output stays machine-readable; exit code 2 is unchanged (#15).
 - `secret-risk` no longer flags secret references as credential assignments: GitHub Actions `${{ ... }}` expressions, calls and subscripts like `os.getenv(...)` / `os.environ[...]`, `None`/`null`/boolean literals and bare type annotations. Quoted and literal values are still reported (#13).
 
 ### Added

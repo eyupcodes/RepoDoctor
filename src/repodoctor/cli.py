@@ -53,7 +53,7 @@ def check(
     try:
         config = RepoDoctorConfig.from_target(target)
     except ConfigError as error:
-        typer.echo(f"Error: {error}")
+        typer.echo(f"Error: {error}", err=True)
         raise typer.Exit(code=2) from error
 
     result = run(config)
