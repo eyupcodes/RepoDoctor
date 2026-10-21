@@ -84,6 +84,12 @@ repodoctor check . --json
 {"target": "/path/to/repo", "score": 85, "summary": {"passed": 5, "warnings": 0, "failed": 1}, "checks": [{"id": "readme", "status": "PASS", "summary": "Found README file.", "paths": []}]}
 ```
 
+Add `--sarif` to print a [SARIF 2.1.0](https://docs.oasis-open.org/sarif/sarif/v2.1.0/sarif-v2.1.0.html) log instead, for example to upload to GitHub code scanning. Each check is a rule; warnings and failures become results, and `secret-risk` findings carry the file and line (never the matched value). It cannot be combined with `--json` (exit code 2); other exit codes do not change:
+
+```bash
+repodoctor check . --sarif > repodoctor.sarif
+```
+
 Run the built-in examples directly:
 
 ```bash
