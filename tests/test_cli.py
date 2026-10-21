@@ -91,3 +91,35 @@ def test_json_flag_does_not_hide_config_errors(tmp_path):
     assert result.exit_code == 2
     assert "does not exist" in result.stderr
     assert result.stdout == ""
+
+
+def test_sarif_output_reports_secret_location_without_value(tmp_path):
+    (tmp_path / "config.txt").write_text("API_KEY=hunter2hunter2\n", encoding="utf-8")
+
+    result = runner.invoke(app, ["check", str(tmp_path), "--sarif"])
+
+    assert result.exit_code == 1
+    log = json.loads(result.stdout)
+    assert log["version"] == "2.1.0"
+    located = [r for r in log["runs"][0]["results"] if r["ruleId"] == "secret-risk"]
+    region = located[0]["locations"][0]["physicalLocation"]["region"]
+    assert region["startLine"] == 1
+    assert "hunter2" not in result.stdout
+    assert "Score:" not in result.stdout
+
+
+def test_sarif_output_for_healthy_repository_has_no_results(tmp_path):
+    make_healthy_repository(tmp_path)
+
+    result = runner.invoke(app, ["check", str(tmp_path), "--sarif"])
+
+    assert result.exit_code == 0
+    assert json.loads(result.stdout)["runs"][0]["results"] == []
+
+
+def test_sarif_and_json_are_mutually_exclusive(tmp_path):
+    result = runner.invoke(app, ["check", str(tmp_path), "--json", "--sarif"])
+
+    assert result.exit_code == 2
+    assert "mutually exclusive" in result.stderr
+    assert result.stdout == ""
