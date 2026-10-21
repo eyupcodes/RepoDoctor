@@ -1,3 +1,7 @@
+from pathlib import Path
+
+import pytest
+
 from repodoctor.scanner import scan_repository
 
 
@@ -136,6 +140,59 @@ def fake_walk(errors, tree):
         yield from tree
 
     return walk
+
+
+@pytest.mark.parametrize(
+    ("limit", "value", "diagnostic", "expected_files"),
+    [
+        ("MAX_FILES", 1, "file scan limit reached", ("first/a.txt",)),
+        (
+            "MAX_TOTAL_BYTES",
+            4,
+            "total byte scan limit reached",
+            ("first/a.txt", "first/b.txt"),
+        ),
+    ],
+)
+def test_scanner_stops_before_next_directory_after_limit(
+    monkeypatch, tmp_path, limit, value, diagnostic, expected_files
+):
+    first = tmp_path / "first"
+    later = tmp_path / "later"
+    first.mkdir()
+    (later / "nested").mkdir(parents=True)
+    for path in (first / "a.txt", first / "b.txt", later / "unread.txt"):
+        path.write_text("safe", encoding="utf-8")
+    later_directories = ["nested"]
+    monkeypatch.setattr(
+        "os.walk",
+        fake_walk(
+            [],
+            [
+                (tmp_path, ["first", "later"], []),
+                (first, [], ["a.txt", "b.txt"]),
+                (later, later_directories, ["unread.txt"]),
+            ],
+        ),
+    )
+    monkeypatch.setattr(f"repodoctor.scanner.{limit}", value)
+    read_paths = []
+    read_bytes = Path.read_bytes
+
+    def track_read(path):
+        read_paths.append(path.relative_to(tmp_path).as_posix())
+        return read_bytes(path)
+
+    monkeypatch.setattr(Path, "read_bytes", track_read)
+
+    snapshot = scan_repository(tmp_path)
+
+    assert snapshot.files == expected_files
+    assert snapshot.directories == ("first", "later")
+    assert [item.path for item in snapshot.contents] == ["first/a.txt"]
+    assert read_paths == ["first/a.txt"]
+    assert snapshot.diagnostics == (diagnostic,)
+    assert later_directories == []
 
 
 def test_scanner_reports_unreadable_directory_relative_to_target(monkeypatch, tmp_path):

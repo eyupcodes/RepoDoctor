@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Added regression tests ensuring file and byte scan limits stop further directory traversal and file reads.
 - Added tests for scanner failure handling (unreadable files and directories, byte limit, non-UTF-8 and binary files) and the `python -m repodoctor` entry point; removed a redundant diagnostic branch (#5).
 
 ## [0.1.0] - 2026-09-09
