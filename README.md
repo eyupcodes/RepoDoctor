@@ -110,6 +110,8 @@ repodoctor check examples/risky-repository
 | `ci` | Continuous integration | Active workflow in `.github/workflows/*.yml` or `*.yaml` | -15 |
 | `secret-risk` | Secret & credential hygiene | Zero matched private keys, secret-named assignments with a literal value (references such as `${{ secrets.X }}`, `os.environ[...]` or `os.getenv(...)` are ignored), or well-known token formats (GitHub, AWS, Slack, Stripe, Google, LLM API keys); uninspected files trigger warnings (-5) | -40 |
 
+To suppress a reviewed `secret-risk` finding (for example a fake credential in a test fixture), put `repodoctor: ignore` on the same line, usually in a comment: `password = "fixture"  # repodoctor: ignore`. Only that line is skipped.
+
 **Score calculation:** `max(0, 100 - sum(penalties))`.
 
 ### Exit Codes
