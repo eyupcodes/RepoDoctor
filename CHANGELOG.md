@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `secret-risk` skips a line that contains `repodoctor: ignore`, so reviewed findings such as fake credentials in test fixtures can be suppressed one line at a time (#20).
 - `repodoctor check --sarif` prints a SARIF 2.1.0 log (one rule per check, file and line for `secret-risk` findings, no matched values); it cannot be combined with `--json` (#17).
 - `repodoctor check --json` prints the score, summary counts and every check as one JSON object; exit codes are unchanged (#11).
 - `secret-risk` flags well-known token formats (GitHub, AWS, Slack, Stripe, Google, `sk-` LLM keys) anywhere on a line, reported as `(known token format)`; obvious placeholders like `ghp_xxxx…` are ignored (#9).
