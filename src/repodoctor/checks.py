@@ -74,6 +74,8 @@ KNOWN_TOKEN_PATTERN = re.compile(
     r"|\bAIza[0-9A-Za-z_-]{35}\b"
     r"|\bsk-(?:ant-)?[A-Za-z0-9_-]{32,}"
 )
+# A line carrying this marker (usually in a comment) was reviewed and is skipped.
+IGNORE_MARKER = "repodoctor: ignore"
 PLACEHOLDERS = re.compile(
     r"^(?:example|changeme|placeholder|your[_-].*|<.*>|\$\{?\w+\}?)$", re.IGNORECASE
 )
@@ -119,6 +121,8 @@ def _secret_result(snapshot: RepositorySnapshot) -> CheckResult:
     findings: list[str] = []
     for content in snapshot.contents:
         for line_number, line in enumerate(content.lines, start=1):
+            if IGNORE_MARKER in line:
+                continue
             private_key = PRIVATE_KEY_PATTERN.search(line)
             known_token = next(
                 (

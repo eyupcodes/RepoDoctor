@@ -183,3 +183,23 @@ def test_hardcoded_credentials_are_still_risks(tmp_path, line):
 )
 def test_secret_references_are_not_risks(tmp_path, line):
     assert _secret_paths(tmp_path, "settings.txt", line) == ()
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        'password = "abc123xyz"  # repodoctor: ignore',
+        "DB_PASSWORD=hunter2 # repodoctor: ignore",
+        "-----BEGIN RSA PRIVATE KEY----- # repodoctor: ignore",
+    ],
+)
+def test_marked_lines_are_not_risks(tmp_path, line):
+    assert _secret_paths(tmp_path, "settings.txt", line) == ()
+
+
+def test_marker_only_covers_its_own_line(tmp_path):
+    content = 'password = "abc123xyz"  # repodoctor: ignore\nDB_PASSWORD=hunter2\n'
+
+    assert _secret_paths(tmp_path, "settings.txt", content) == (
+        "settings.txt:2 (credential assignment)",
+    )
