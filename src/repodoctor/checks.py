@@ -15,6 +15,30 @@ _LICENSE_NAMES = frozenset(
 )
 
 
+# Root-level configuration files of CI services other than GitHub Actions.
+_CI_FILES = frozenset(
+    {
+        ".gitlab-ci.yml",
+        ".circleci/config.yml",
+        "azure-pipelines.yml",
+        "Jenkinsfile",
+        ".travis.yml",
+        "bitbucket-pipelines.yml",
+    }
+)
+
+
+def _has_ci(snapshot: RepositorySnapshot) -> bool:
+    return any(
+        path in _CI_FILES
+        or (
+            path.startswith(".github/workflows/")
+            and path.lower().endswith((".yml", ".yaml"))
+        )
+        for path in snapshot.files
+    )
+
+
 def _is_readme(path: str) -> bool:
     if "/" in path:
         return False
@@ -49,11 +73,7 @@ STRUCTURAL_CHECKS = (
     (
         "ci",
         "CI workflow",
-        lambda snapshot: any(
-            path.startswith(".github/workflows/")
-            and path.lower().endswith((".yml", ".yaml"))
-            for path in snapshot.files
-        ),
+        _has_ci,
     ),
 )
 # Match assignments like KEY=VALUE, KEY: VALUE, optionally prefixed with `export`,
