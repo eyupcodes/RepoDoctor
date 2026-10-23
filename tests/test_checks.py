@@ -29,6 +29,38 @@ def test_missing_structure_checks_fail(tmp_path):
     assert checks[-1].status is CheckStatus.PASS
 
 
+def _ci_status(root):
+    return next(c for c in evaluate_repository(scan_repository(root)) if c.id == "ci")
+
+
+@pytest.mark.parametrize(
+    "ci_file",
+    [
+        ".gitlab-ci.yml",
+        ".circleci/config.yml",
+        "azure-pipelines.yml",
+        "Jenkinsfile",
+        ".travis.yml",
+        "bitbucket-pipelines.yml",
+    ],
+)
+def test_ci_check_accepts_other_ci_services(tmp_path, ci_file):
+    path = tmp_path / ci_file
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("stages: []\n", encoding="utf-8")
+
+    assert _ci_status(tmp_path).status is CheckStatus.PASS
+
+
+@pytest.mark.parametrize("ci_file", ["docs/.gitlab-ci.yml", "sub/Jenkinsfile"])
+def test_ci_check_ignores_ci_files_outside_the_root(tmp_path, ci_file):
+    path = tmp_path / ci_file
+    path.parent.mkdir(parents=True)
+    path.write_text("stages: []\n", encoding="utf-8")
+
+    assert _ci_status(tmp_path).status is CheckStatus.FAIL
+
+
 def test_secret_risk_reports_location_without_value(tmp_path):
     make_healthy_repository(tmp_path)
     secret_value = "synthetic-nonproduction-value-123456"
