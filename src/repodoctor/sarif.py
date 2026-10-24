@@ -1,4 +1,5 @@
 import re
+from urllib.parse import quote
 
 from repodoctor import __version__
 from repodoctor.models import CheckStatus, RunResult
@@ -33,7 +34,9 @@ def result_to_sarif(result: RunResult) -> dict[str, object]:
                         "locations": [
                             {
                                 "physicalLocation": {
-                                    "artifactLocation": {"uri": match["path"]},
+                                    "artifactLocation": {
+                                        "uri": quote(match["path"], safe="/")
+                                    },
                                     "region": {"startLine": int(match["line"])},
                                 }
                             }
