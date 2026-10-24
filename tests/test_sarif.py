@@ -1,5 +1,8 @@
 import json
 from pathlib import Path
+from urllib.parse import unquote, urlsplit
+
+import pytest
 
 from repodoctor.models import CheckResult, CheckStatus, RunResult
 from repodoctor.sarif import result_to_sarif
@@ -63,8 +66,42 @@ def test_secret_findings_become_physical_locations_without_values():
     assert first["region"]["startLine"] == 3
     assert "credential assignment" in results[0]["message"]["text"]
     second = results[1]["locations"][0]["physicalLocation"]
-    assert second["artifactLocation"]["uri"] == "src/a:b.py"
+    assert second["artifactLocation"]["uri"] == "src/a%3Ab.py"
     assert second["region"]["startLine"] == 12
+
+
+@pytest.mark.parametrize(
+    ("path", "expected_uri"),
+    [
+        ("src/my config.py", "src/my%20config.py"),
+        ("src/key#backup.env", "src/key%23backup.env"),
+        ("src/100%.env", "src/100%25.env"),
+        ("src/what?.env", "src/what%3F.env"),
+        ("src/şifre.env", "src/%C5%9Fifre.env"),
+        ("src/already%20encoded.env", "src/already%2520encoded.env"),
+        ("config:backup.env", "config%3Abackup.env"),
+    ],
+)
+def test_finding_paths_are_encoded_as_relative_uris(path, expected_uri):
+    log = result_to_sarif(
+        _result(
+            CheckResult(
+                "secret-risk",
+                CheckStatus.FAIL,
+                "Found 1 potential secret risk(s).",
+                paths=(f"{path}:7 (credential assignment)",),
+            )
+        )
+    )
+
+    (result,) = log["runs"][0]["results"]
+    location = result["locations"][0]["physicalLocation"]
+    uri = location["artifactLocation"]["uri"]
+    assert uri == expected_uri
+    parsed = urlsplit(uri)
+    assert (parsed.scheme, parsed.netloc, parsed.query, parsed.fragment) == ("",) * 4
+    assert unquote(parsed.path) == path
+    assert location["region"]["startLine"] == 7
 
 
 def test_diagnostic_paths_without_a_line_stay_in_the_message():
