@@ -49,10 +49,15 @@ def _read_candidate(
             text = data.decode("utf-8")
         except UnicodeDecodeError:
             return None, _sanitize_relative_path(relative_path)
-        lines = tuple(text.splitlines()[:MAX_LINES])
+        lines = text.splitlines()
+        diagnostic = (
+            f"{_sanitize_relative_path(relative_path)} (line scan limit reached)"
+            if len(lines) > MAX_LINES
+            else None
+        )
         return FileContent(
-            path=_sanitize_relative_path(relative_path), lines=lines
-        ), None
+            path=_sanitize_relative_path(relative_path), lines=tuple(lines[:MAX_LINES])
+        ), diagnostic
     except OSError:
         return None, _sanitize_relative_path(relative_path)
 
@@ -141,12 +146,12 @@ def scan_repository(target: Path) -> RepositorySnapshot:
                 break
 
             content, diagnostic = _read_candidate(path, relative_path)
+            if diagnostic is not None:
+                diagnostics.append(diagnostic)
             if content is not None:
                 total_bytes += file_size
                 contents.append(content)
-            elif diagnostic is not None:
-                diagnostics.append(diagnostic)
-            else:
+            elif diagnostic is None:
                 total_bytes += file_size
 
     return RepositorySnapshot(
