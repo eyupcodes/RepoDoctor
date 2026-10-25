@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The `ci` check no longer treats YAML files in nested `.github/workflows/` directories as active GitHub Actions workflows.
 - Files exceeding the per-file line scan limit now produce an incomplete-scan warning instead of silently reporting a clean secret check; findings in inspected lines are still reported.
 - SARIF finding locations percent-encode file paths so spaces, reserved URI characters and Unicode filenames link to the correct file.
 - `repodoctor check` prints invalid-target errors to stderr instead of stdout, so `--json` output stays machine-readable; exit code 2 is unchanged (#15).
