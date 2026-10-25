@@ -32,7 +32,7 @@ def _has_ci(snapshot: RepositorySnapshot) -> bool:
     return any(
         path in _CI_FILES
         or (
-            path.startswith(".github/workflows/")
+            path.rpartition("/")[0] == ".github/workflows"
             and path.lower().endswith((".yml", ".yaml"))
         )
         for path in snapshot.files
