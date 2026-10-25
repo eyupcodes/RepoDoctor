@@ -33,6 +33,24 @@ def _ci_status(root):
     return next(c for c in evaluate_repository(scan_repository(root)) if c.id == "ci")
 
 
+@pytest.mark.parametrize("ci_file", ["ci.yml", "ci.yaml"])
+def test_ci_check_accepts_direct_github_workflows(tmp_path, ci_file):
+    path = tmp_path / ".github" / "workflows" / ci_file
+    path.parent.mkdir(parents=True)
+    path.write_text("name: CI\n", encoding="utf-8")
+
+    assert _ci_status(tmp_path).status is CheckStatus.PASS
+
+
+@pytest.mark.parametrize("ci_file", ["archive/ci.yml", "archive/nested/ci.yaml"])
+def test_ci_check_ignores_nested_github_workflows(tmp_path, ci_file):
+    path = tmp_path / ".github" / "workflows" / ci_file
+    path.parent.mkdir(parents=True)
+    path.write_text("name: Archived CI\n", encoding="utf-8")
+
+    assert _ci_status(tmp_path).status is CheckStatus.FAIL
+
+
 @pytest.mark.parametrize(
     "ci_file",
     [
