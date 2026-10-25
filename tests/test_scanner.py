@@ -93,13 +93,23 @@ def test_scanner_skips_binary_files_without_diagnostic(tmp_path):
     assert snapshot.diagnostics == ()
 
 
-def test_scanner_truncates_files_to_max_lines(monkeypatch, tmp_path):
-    (tmp_path / "long.txt").write_text("\n".join("line" for _ in range(5)))
+@pytest.mark.parametrize("line_count", [0, 2, 3, 4])
+@pytest.mark.parametrize("trailing_newline", [False, True])
+def test_scanner_reports_only_files_exceeding_max_lines(
+    monkeypatch, tmp_path, line_count, trailing_newline
+):
+    text = "\n".join("line" for _ in range(line_count))
+    if text and trailing_newline:
+        text += "\n"
+    (tmp_path / "long.txt").write_text(text, encoding="utf-8")
     monkeypatch.setattr("repodoctor.scanner.MAX_LINES", 3)
 
     snapshot = scan_repository(tmp_path)
 
-    assert len(snapshot.contents[0].lines) == 3
+    assert snapshot.contents[0].lines == ("line",) * min(line_count, 3)
+    assert snapshot.diagnostics == (
+        ("long.txt (line scan limit reached)",) if line_count > 3 else ()
+    )
 
 
 def test_scanner_reports_unreadable_file(monkeypatch, tmp_path):

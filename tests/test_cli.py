@@ -72,6 +72,44 @@ def test_json_output_for_healthy_repository(tmp_path):
     assert "Score:" not in result.stdout
 
 
+def test_json_output_warns_when_line_limit_hides_uninspected_content(
+    monkeypatch, tmp_path
+):
+    make_healthy_repository(tmp_path)
+    secret_value = "synthetic-nonproduction-value-123456"
+    (tmp_path / "long.txt").write_text(
+        f"safe\nsafe\nsafe\nAPI_KEY={secret_value}\n", encoding="utf-8"
+    )
+    monkeypatch.setattr("repodoctor.scanner.MAX_LINES", 3)
+
+    result = runner.invoke(app, ["check", str(tmp_path), "--json"])
+
+    assert result.exit_code == 1
+    data = json.loads(result.stdout)
+    assert data["score"] == 95
+    assert data["summary"] == {"passed": 5, "warnings": 1, "failed": 0}
+    secret = next(c for c in data["checks"] if c["id"] == "secret-risk")
+    assert secret["status"] == "WARNING"
+    assert secret["paths"] == ["long.txt (line scan limit reached)"]
+    assert secret_value not in result.stdout
+
+
+def test_line_limit_preserves_secret_findings_in_inspected_lines(monkeypatch, tmp_path):
+    (tmp_path / "long.txt").write_text(
+        "API_KEY=synthetic-nonproduction-value-123456\nsafe\nsafe\nsafe\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr("repodoctor.scanner.MAX_LINES", 3)
+
+    result = runner.invoke(app, ["check", str(tmp_path), "--json"])
+
+    assert result.exit_code == 1
+    data = json.loads(result.stdout)
+    secret = next(c for c in data["checks"] if c["id"] == "secret-risk")
+    assert secret["status"] == "FAIL"
+    assert secret["paths"] == ["long.txt:1 (credential assignment)"]
+
+
 def test_json_output_keeps_exit_code_and_hides_secret_values(tmp_path):
     (tmp_path / "config.txt").write_text("API_KEY=hunter2hunter2\n", encoding="utf-8")
 
