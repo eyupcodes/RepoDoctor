@@ -240,3 +240,11 @@ def test_scanner_sanitizes_control_characters_in_paths(tmp_path):
     snapshot = scan_repository(tmp_path)
 
     assert snapshot.files == ("bad\\x1bname.txt",)
+
+
+def test_scanner_splits_lines_like_an_editor(tmp_path):
+    (tmp_path / "mixed.txt").write_bytes("a\x0cb\u2028c\x85d\r\ne\rf\ng\n".encode())
+
+    snapshot = scan_repository(tmp_path)
+
+    assert snapshot.contents[0].lines == ("a\x0cb\u2028c\x85d", "e", "f", "g")
