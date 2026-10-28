@@ -1,4 +1,5 @@
 import os
+import re
 from pathlib import Path
 
 from repodoctor.models import FileContent, RepositorySnapshot
@@ -7,6 +8,7 @@ MAX_FILE_SIZE = 1024 * 1024
 MAX_LINES = 10_000
 MAX_FILES = 10_000
 MAX_TOTAL_BYTES = 8 * 1024 * 1024
+_LINE_BREAK = re.compile(r"\r\n|\n|\r")
 EXCLUDED_DIRECTORIES = frozenset(
     {
         ".git",
@@ -35,6 +37,18 @@ def _sanitize_relative_path(path: str) -> str:
     return "".join(escaped)
 
 
+def _split_lines(text: str) -> list[str]:
+    """Split like an editor: only CRLF, LF and CR end a line.
+
+    ``str.splitlines()`` also breaks on form feeds and Unicode separators,
+    which would shift every later line number.
+    """
+    lines = _LINE_BREAK.split(text)
+    if lines[-1] == "":
+        lines.pop()
+    return lines
+
+
 def _read_candidate(
     path: Path, relative_path: str
 ) -> tuple[FileContent | None, str | None]:
@@ -49,7 +63,7 @@ def _read_candidate(
             text = data.decode("utf-8")
         except UnicodeDecodeError:
             return None, _sanitize_relative_path(relative_path)
-        lines = text.splitlines()
+        lines = _split_lines(text)
         diagnostic = (
             f"{_sanitize_relative_path(relative_path)} (line scan limit reached)"
             if len(lines) > MAX_LINES

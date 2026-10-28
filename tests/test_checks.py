@@ -93,6 +93,17 @@ def test_secret_risk_reports_location_without_value(tmp_path):
     assert secret_value not in repr(secret_check)
 
 
+def test_secret_risk_line_numbers_ignore_form_feeds_and_unicode_separators(tmp_path):
+    make_healthy_repository(tmp_path)
+    (tmp_path / "config.txt").write_bytes(
+        "# header\x0c\u2028\nAPI_KEY=synthetic-nonproduction-value-123456\n".encode()
+    )
+
+    checks = evaluate_repository(scan_repository(tmp_path))
+
+    assert checks[-1].paths == ("config.txt:2 (credential assignment)",)
+
+
 def test_scans_extensionless_files_and_common_credential_names(tmp_path):
     make_healthy_repository(tmp_path)
     (tmp_path / "Dockerfile").write_text(
