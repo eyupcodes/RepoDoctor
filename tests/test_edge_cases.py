@@ -188,3 +188,12 @@ def test_cli_version_flag():
     result = runner.invoke(app, ["--version"])
     assert result.exit_code == 0
     assert __version__ in result.stdout
+
+
+def test_credential_on_first_line_of_bom_file_is_detected(tmp_path):
+    (tmp_path / ".env").write_bytes(b"\xef\xbb\xbfAPI_KEY=abcd1234realvalue\n")
+
+    secret = evaluate_repository(scan_repository(tmp_path))[-1]
+
+    assert secret.status is CheckStatus.FAIL
+    assert secret.paths == (".env:1 (credential assignment)",)

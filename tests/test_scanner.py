@@ -248,3 +248,11 @@ def test_scanner_splits_lines_like_an_editor(tmp_path):
     snapshot = scan_repository(tmp_path)
 
     assert snapshot.contents[0].lines == ("a\x0cb\u2028c\x85d", "e", "f", "g")
+
+
+def test_scanner_drops_utf8_bom_from_first_line(tmp_path):
+    (tmp_path / ".env").write_bytes(b"\xef\xbb\xbfAPI_KEY=abcd1234realvalue\n")
+
+    snapshot = scan_repository(tmp_path)
+
+    assert snapshot.contents[0].lines == ("API_KEY=abcd1234realvalue",)

@@ -60,7 +60,7 @@ def _read_candidate(
         if b"\x00" in data:
             return None, None
         try:
-            text = data.decode("utf-8")
+            text = data.decode("utf-8-sig")
         except UnicodeDecodeError:
             return None, _sanitize_relative_path(relative_path)
         lines = _split_lines(text)
