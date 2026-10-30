@@ -223,6 +223,9 @@ def _secret_paths(tmp_path, name: str, line: str) -> tuple[str, ...]:
         'password = "abc123xyz"',
         'password = "get_password()"',
         "client_secret: s3cr3tvalue",
+        '{"api_key": "abcd1234efgh"}',
+        '  "password": "hunter2hunter2",',
+        "'client_secret': 'abcd1234',",
     ],
 )
 def test_hardcoded_credentials_are_still_risks(tmp_path, line):
@@ -240,6 +243,10 @@ def test_hardcoded_credentials_are_still_risks(tmp_path, line):
         "token = get_token()",
         "token: str = None",
         "password=None",
+        '  "token": null,',
+        '{"api_key": "${API_KEY}"}',
+        '  "password": os.getenv("PW"),',
+        '  "max_tokens": 100,',
     ],
 )
 def test_secret_references_are_not_risks(tmp_path, line):

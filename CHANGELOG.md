@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `secret-risk` flags credentials whose key is quoted, such as `"api_key": "..."` in JSON or dict literals (#31).
 - `secret-risk` no longer misses a credential on the first line of a file saved with a UTF-8 BOM (#29).
 - `secret-risk` and other line-based findings report real line numbers in files containing form feeds, U+2028 or similar characters: only CRLF, LF and CR end a line (#27).
 - The `ci` check no longer treats YAML files in nested `.github/workflows/` directories as active GitHub Actions workflows.

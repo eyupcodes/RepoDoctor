@@ -79,8 +79,10 @@ STRUCTURAL_CHECKS = (
 # Match assignments like KEY=VALUE, KEY: VALUE, optionally prefixed with `export`,
 # where KEY contains a high-signal secret indicator. Broadened from the original
 # narrow list to cover GITHUB_TOKEN, AWS_SECRET_ACCESS_KEY, CLIENT_SECRET, etc.
+# The key may be quoted, as in JSON or a Python dict literal (``"api_key": "..."``),
+# including a single-line object that opens with ``{``.
 CREDENTIAL_PATTERN = re.compile(
-    r"^\s*(?:export\s+)?[A-Z0-9_.-]*?(?:API_KEY|SECRET|TOKEN|PASSWORD|ACCESS_KEY|PRIVATE_KEY|DATABASE_URL)\b\s*[:=]\s*[\"']?([^\"'\s#;]+)",
+    r"^\s*(?:export\s+|\{\s*)?[\"']?[A-Z0-9_.-]*?(?:API_KEY|SECRET|TOKEN|PASSWORD|ACCESS_KEY|PRIVATE_KEY|DATABASE_URL)\b[\"']?\s*[:=]\s*[\"']?([^\"'\s#;]+)",
     re.IGNORECASE,
 )
 PRIVATE_KEY_PATTERN = re.compile(r"-----BEGIN (?:[A-Z0-9 ]+ )?PRIVATE KEY-----")
