@@ -140,7 +140,7 @@ def _structural_results(snapshot: RepositorySnapshot) -> tuple[CheckResult, ...]
 
 
 def _secret_result(snapshot: RepositorySnapshot) -> CheckResult:
-    findings: list[str] = []
+    findings: set[tuple[str, int, str]] = set()
     for content in snapshot.contents:
         for line_number, line in enumerate(content.lines, start=1):
             if IGNORE_MARKER in line:
@@ -156,22 +156,25 @@ def _secret_result(snapshot: RepositorySnapshot) -> CheckResult:
             )
             credential = CREDENTIAL_PATTERN.search(line)
             if private_key:
-                findings.append(f"{content.path}:{line_number} (private key)")
+                findings.add((content.path, line_number, "private key"))
             elif known_token:
-                findings.append(f"{content.path}:{line_number} (known token format)")
+                findings.add((content.path, line_number, "known token format"))
             elif (
                 credential
                 and not PLACEHOLDERS.match(credential.group(1))
                 and not _is_reference(line, credential)
             ):
-                findings.append(f"{content.path}:{line_number} (credential assignment)")
+                findings.add((content.path, line_number, "credential assignment"))
 
     if findings:
         return CheckResult(
             id="secret-risk",
             status=CheckStatus.FAIL,
             summary=f"Found {len(findings)} potential secret risk(s).",
-            paths=tuple(sorted(set(findings))),
+            paths=tuple(
+                f"{path}:{line_number} ({kind})"
+                for path, line_number, kind in sorted(findings)
+            ),
         )
     if snapshot.diagnostics:
         return CheckResult(

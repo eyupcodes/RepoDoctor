@@ -271,3 +271,27 @@ def test_marker_only_covers_its_own_line(tmp_path):
     assert _secret_paths(tmp_path, "settings.txt", content) == (
         "settings.txt:2 (credential assignment)",
     )
+
+
+def test_secret_findings_are_ordered_by_path_then_numeric_line(tmp_path):
+    make_healthy_repository(tmp_path)
+    lines = ["# filler"] * 100
+    for number in (2, 9, 10, 100):
+        lines[number - 1] = 'password = "hunter2hunter2"'
+    (tmp_path / "b.py").write_text("\n".join(lines) + "\n", encoding="utf-8")
+    (tmp_path / "a.py").write_text('\npassword = "hunter2hunter2"\n', encoding="utf-8")
+
+    secret = next(
+        check
+        for check in evaluate_repository(scan_repository(tmp_path))
+        if check.id == "secret-risk"
+    )
+
+    assert secret.paths == (
+        "a.py:2 (credential assignment)",
+        "b.py:2 (credential assignment)",
+        "b.py:9 (credential assignment)",
+        "b.py:10 (credential assignment)",
+        "b.py:100 (credential assignment)",
+    )
+    assert secret.summary == "Found 5 potential secret risk(s)."
