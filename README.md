@@ -137,7 +137,7 @@ RepoDoctor is strictly **read-only** and bounded against common static analysis 
   - Max cumulative bytes: 8 MiB per scan to prevent RAM exhaustion
   - Max files: 10,000 files indexed
 - **Binary File Skipping:** Files containing NUL bytes (`\x00`) are safely skipped without Unicode decode exceptions.
-- **Excluded Directories:** Standard dependency and cache folders (`.git`, `node_modules`, `.venv`, `dist`, `__pycache__`, etc.) are skipped by default.
+- **Excluded Directories:** Standard dependency and cache folders (`.git`, `node_modules`, `.venv`, `dist`, `__pycache__`, `.mypy_cache`, `.tox`, `.nox`, `.eggs`, `htmlcov`, etc.) are skipped by default.
 
 ---
 
