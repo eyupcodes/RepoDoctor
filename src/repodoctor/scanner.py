@@ -20,6 +20,11 @@ EXCLUDED_DIRECTORIES = frozenset(
         "__pycache__",
         ".pytest_cache",
         ".ruff_cache",
+        ".mypy_cache",
+        ".tox",
+        ".nox",
+        ".eggs",
+        "htmlcov",
     }
 )
 
