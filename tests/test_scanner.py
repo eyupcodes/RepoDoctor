@@ -23,6 +23,19 @@ def test_scanner_skips_ignored_directories_and_symlinks(tmp_path):
     assert "linked.txt" not in snapshot.files
 
 
+@pytest.mark.parametrize("name", [".mypy_cache", ".tox", ".nox", ".eggs", "htmlcov"])
+def test_scanner_skips_tool_cache_directories(tmp_path, name):
+    cache = tmp_path / name
+    cache.mkdir()
+    (cache / "data.txt").write_text("PASSWORD=synthetic-value", encoding="utf-8")
+    (tmp_path / "keep.txt").write_text("safe", encoding="utf-8")
+
+    snapshot = scan_repository(tmp_path)
+
+    assert snapshot.files == ("keep.txt",)
+    assert name not in snapshot.directories
+
+
 def test_scanner_reports_when_file_limit_is_reached(monkeypatch, tmp_path):
     for index in range(3):
         (tmp_path / f"file-{index}.txt").write_text("safe", encoding="utf-8")
