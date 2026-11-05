@@ -96,6 +96,18 @@ KNOWN_TOKEN_PATTERN = re.compile(
     r"|\bAIza[0-9A-Za-z_-]{35}\b"
     r"|\bsk-(?:ant-)?[A-Za-z0-9_-]{32,}"
 )
+# ``scheme://[user]:password@host`` with a literal password. The password may not
+# contain ``/``, ``@`` or whitespace; ``user@host`` and ``host:port`` never match.
+URL_PASSWORD_PATTERN = re.compile(
+    r"\b[a-z][a-z0-9+.-]*://[^\s:/@]*:([^\s:/@]+)@", re.IGNORECASE
+)
+# Passwords in URLs that are templates (``${PW}``, ``$PW``, ``{pw}``, ``<pw>``,
+# ``%s``, ``%(pw)s``) or the usual dummy words used in documentation.
+URL_PASSWORD_PLACEHOLDER = re.compile(
+    r"^(?:[$<{%].*|(?:password|passwd|pass|pwd|secret|changeme|example|x+|\*+)"
+    r"|your[_-].*)$",
+    re.IGNORECASE,
+)
 # A line carrying this marker (usually in a comment) was reviewed and is skipped.
 IGNORE_MARKER = "repodoctor: ignore"
 PLACEHOLDERS = re.compile(
@@ -155,6 +167,14 @@ def _secret_result(snapshot: RepositorySnapshot) -> CheckResult:
                 None,
             )
             credential = CREDENTIAL_PATTERN.search(line)
+            url_password = next(
+                (
+                    m
+                    for m in URL_PASSWORD_PATTERN.finditer(line)
+                    if not URL_PASSWORD_PLACEHOLDER.match(m.group(1))
+                ),
+                None,
+            )
             if private_key:
                 findings.add((content.path, line_number, "private key"))
             elif known_token:
@@ -165,6 +185,8 @@ def _secret_result(snapshot: RepositorySnapshot) -> CheckResult:
                 and not _is_reference(line, credential)
             ):
                 findings.add((content.path, line_number, "credential assignment"))
+            elif url_password:
+                findings.add((content.path, line_number, "url credential"))
 
     if findings:
         return CheckResult(

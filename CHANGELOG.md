@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `secret-risk` flags literal passwords embedded in URLs such as `postgres://app:hunter2@db/prod` (reported as `url credential`); templated passwords and dummy words are ignored (#37).
 - The scanner skips `.mypy_cache`, `.tox`, `.nox`, `.eggs` and `htmlcov`, so generated files no longer use up the scan limits or cause `secret-risk` false positives (#35).
 - `secret-risk` lists findings in file order by numeric line (`a.py:2` before `a.py:10`) in the terminal, JSON and SARIF output (#33).
 - `secret-risk` flags credentials whose key is quoted, such as `"api_key": "..."` in JSON or dict literals (#31).

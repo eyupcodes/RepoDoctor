@@ -295,3 +295,67 @@ def test_secret_findings_are_ordered_by_path_then_numeric_line(tmp_path):
         "b.py:100 (credential assignment)",
     )
     assert secret.summary == "Found 5 potential secret risk(s)."
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        "DB_URL=postgres://app:hunter2@db.internal/prod",
+        "BROKER=redis://:s3cr3tvalue@cache:6379/0",
+        'conn = "mongodb+srv://admin:Zx9fQ2@cluster0.example.net/test"',
+        "git clone https://bot:ghs8rT4uQ@git.example.com/org/repo.git",
+    ],
+)
+def test_passwords_embedded_in_urls_are_risks(tmp_path, line):
+    assert _secret_paths(tmp_path, "settings.txt", line) == (
+        "settings.txt:1 (url credential)",
+    )
+
+
+def test_url_password_value_is_never_printed(tmp_path):
+    make_healthy_repository(tmp_path)
+    (tmp_path / "cfg.txt").write_text(
+        "DB_URL=postgres://app:hunter2@db/prod\n", encoding="utf-8"
+    )
+
+    secret_check = evaluate_repository(scan_repository(tmp_path))[-1]
+
+    assert secret_check.status is CheckStatus.FAIL
+    assert "hunter2" not in secret_check.summary
+    assert "hunter2" not in repr(secret_check)
+
+
+def test_url_password_on_a_credential_assignment_is_reported_once(tmp_path):
+    assert _secret_paths(
+        tmp_path, "settings.txt", "DATABASE_URL=postgres://app:hunter2@db/prod"
+    ) == ("settings.txt:1 (credential assignment)",)
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        "see https://github.com/eyupcodes/repodoctor for details",
+        "http://localhost:8080/health",
+        "ssh://git@github.com/org/repo.git",
+        "https://user@example.com/path",
+        "postgres://app:${DB_PASSWORD}@db/prod",
+        "postgres://app:$DB_PASSWORD@db/prod",
+        "postgres://app:{password}@db/prod",
+        "postgres://user:<password>@db/prod",
+        "postgres://user:%s@db/prod",
+        "postgres://user:%(pw)s@db/prod",
+        "postgres://user:password@localhost/db",
+        "redis://:changeme@localhost:6379",
+        "https://user:xxxxx@example.com",
+        "mailto:someone@example.com",
+        "time 12:30@home",
+    ],
+)
+def test_urls_without_a_literal_password_are_not_risks(tmp_path, line):
+    assert _secret_paths(tmp_path, "settings.txt", line) == ()
+
+
+def test_marked_url_password_is_not_a_risk(tmp_path):
+    line = "DB_URL=postgres://app:hunter2@db/prod  # repodoctor: ignore"
+
+    assert _secret_paths(tmp_path, "settings.txt", line) == ()
