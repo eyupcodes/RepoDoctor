@@ -148,6 +148,10 @@ def _fake_tokens() -> dict[str, str]:
         "stripe": "sk" + "_live_" + body[:24],
         "google": "AI" + "za" + body[:35],
         "llm": "s" + "k-" + body,
+        "huggingface": "h" + "f_" + body,
+        "npm": "np" + "m_" + body,
+        "gitlab": "glp" + "at-" + body[:20],
+        "pypi": "py" + "pi-AgEIcHlwaS5vcmc" + body + body[:20],
     }
 
 
@@ -182,6 +186,18 @@ def test_ordinary_text_is_not_mistaken_for_a_token(tmp_path):
         "Use a sk-learn style pipeline.\n"
         "The task-force-review-meeting-notes-for-march-2024-are-linked.\n"
         "commit 0123456789abcdef0123456789abcdef01234567\n",
+        encoding="utf-8",
+    )
+
+    assert evaluate_repository(scan_repository(tmp_path))[-1].status is CheckStatus.PASS
+
+
+def test_words_starting_like_new_token_prefixes_are_not_tokens(tmp_path):
+    make_healthy_repository(tmp_path)
+    (tmp_path / "notes.md").write_text(
+        "hf_model_loading_utilities_for_the_transformers_pipeline is a helper.\n"
+        "Run npm_config_cache=/tmp npm ci\n"
+        "See glpat-docs for details.\n",
         encoding="utf-8",
     )
 

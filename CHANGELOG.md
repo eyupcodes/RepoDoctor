@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `secret-risk` recognises Hugging Face (`hf_`), npm (`npm_`), GitLab (`glpat-`) and PyPI (`pypi-`) tokens anywhere on a line (#39).
+
 ### Fixed
 
 - `secret-risk` flags literal passwords embedded in URLs such as `postgres://app:hunter2@db/prod` (reported as `url credential`); templated passwords and dummy words are ignored (#37).
