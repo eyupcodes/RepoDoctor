@@ -95,6 +95,10 @@ KNOWN_TOKEN_PATTERN = re.compile(
     r"|\b[sr]k_live_[A-Za-z0-9]{16,}\b"
     r"|\bAIza[0-9A-Za-z_-]{35}\b"
     r"|\bsk-(?:ant-)?[A-Za-z0-9_-]{32,}"
+    r"|\bhf_[A-Za-z0-9]{34,}\b"
+    r"|\bnpm_[A-Za-z0-9]{36}\b"
+    r"|\bglpat-[A-Za-z0-9_-]{20,}"
+    r"|\bpypi-AgEIcHlwaS5vcmc[A-Za-z0-9_-]{50,}"
 )
 # ``scheme://[user]:password@host`` with a literal password. The password may not
 # contain ``/``, ``@`` or whitespace; ``user@host`` and ``host:port`` never match.
