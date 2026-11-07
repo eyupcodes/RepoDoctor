@@ -161,3 +161,50 @@ def test_sarif_and_json_are_mutually_exclusive(tmp_path):
     assert result.exit_code == 2
     assert "mutually exclusive" in result.stderr
     assert result.stdout == ""
+
+
+def _repository_with_one_warning(tmp_path, monkeypatch):
+    make_healthy_repository(tmp_path)
+    (tmp_path / "long.txt").write_text("safe\n" * 4, encoding="utf-8")
+    monkeypatch.setattr("repodoctor.scanner.MAX_LINES", 3)
+
+
+def test_min_score_tolerates_warnings_at_or_above_threshold(monkeypatch, tmp_path):
+    _repository_with_one_warning(tmp_path, monkeypatch)
+
+    default = runner.invoke(app, ["check", str(tmp_path)])
+    gated = runner.invoke(app, ["check", str(tmp_path), "--min-score", "95"])
+
+    assert default.exit_code == 1
+    assert gated.exit_code == 0
+    assert "Score: 95/100" in gated.stdout
+
+
+def test_min_score_fails_below_threshold(monkeypatch, tmp_path):
+    _repository_with_one_warning(tmp_path, monkeypatch)
+
+    result = runner.invoke(app, ["check", str(tmp_path), "--min-score", "96"])
+
+    assert result.exit_code == 1
+
+
+def test_min_score_never_hides_failed_checks(tmp_path):
+    result = runner.invoke(app, ["check", str(tmp_path), "--min-score", "0"])
+
+    assert result.exit_code == 1
+    assert "5 failed" in result.stdout
+
+
+def test_min_score_works_with_json_and_sarif(monkeypatch, tmp_path):
+    _repository_with_one_warning(tmp_path, monkeypatch)
+
+    for flag in ("--json", "--sarif"):
+        result = runner.invoke(app, ["check", str(tmp_path), flag, "--min-score", "90"])
+        assert result.exit_code == 0, flag
+        json.loads(result.stdout)
+
+
+def test_min_score_rejects_out_of_range_values(tmp_path):
+    for value in ("-1", "101"):
+        result = runner.invoke(app, ["check", str(tmp_path), "--min-score", value])
+        assert result.exit_code == 2, value
