@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `repodoctor check --min-score N` exits 1 only when the health score is below `N` or a check failed, so CI can tolerate known warnings (#41).
 - `secret-risk` recognises Hugging Face (`hf_`), npm (`npm_`), GitLab (`glpat-`) and PyPI (`pypi-`) tokens anywhere on a line (#39).
 
 ### Fixed
