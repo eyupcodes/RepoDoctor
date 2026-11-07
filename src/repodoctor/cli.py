@@ -53,6 +53,18 @@ def check(
         bool,
         typer.Option("--sarif", help="Print the result as a SARIF 2.1.0 log."),
     ] = False,
+    min_score: Annotated[
+        int | None,
+        typer.Option(
+            "--min-score",
+            min=0,
+            max=100,
+            help=(
+                "Exit 1 only if the score is below this value or a check failed; "
+                "warnings alone no longer fail the run."
+            ),
+        ),
+    ] = None,
 ) -> None:
     """Validate a repository target for analysis."""
     if as_json and as_sarif:
@@ -71,5 +83,9 @@ def check(
         typer.echo(json.dumps(result_to_sarif(result), ensure_ascii=True))
     else:
         render_report(result, Console())
-    if result.warnings or result.failures:
+    if min_score is None:
+        failed = bool(result.warnings or result.failures)
+    else:
+        failed = bool(result.failures) or result.score < min_score
+    if failed:
         raise typer.Exit(code=1)

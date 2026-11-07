@@ -122,6 +122,8 @@ To suppress a reviewed `secret-risk` finding (for example a fake credential in a
 | `1` | One or more warnings or check failures detected |
 | `2` | Configuration error, missing target, or target is not a directory |
 
+With `--min-score N` (0-100) warnings alone no longer fail the run: the exit code is `1` only if the score is below `N` or a check failed. A failed check, including `secret-risk`, always exits `1`. Example: `repodoctor check --min-score 90`.
+
 ---
 
 ## Safety & Hardening Architecture
