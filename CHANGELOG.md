@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- The `license` check accepts `COPYING`, `UNLICENSE`, `LICENSE-MIT` and `LICENSE-APACHE` at the repository root instead of reporting a missing license (#43).
+
 ### Added
 
 - `repodoctor check --min-score N` exits 1 only when the health score is below `N` or a check failed, so CI can tolerate known warnings (#41).
