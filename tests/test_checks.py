@@ -375,3 +375,16 @@ def test_marked_url_password_is_not_a_risk(tmp_path):
     line = "DB_URL=postgres://app:hunter2@db/prod  # repodoctor: ignore"
 
     assert _secret_paths(tmp_path, "settings.txt", line) == ()
+
+
+@pytest.mark.parametrize(
+    "name",
+    ["COPYING", "copying.txt", "UNLICENSE", "LICENSE-MIT", "LICENSE-APACHE.md"],
+)
+def test_conventional_license_names_satisfy_license_check(tmp_path, name):
+    (tmp_path / name).write_text("terms", encoding="utf-8")
+
+    checks = evaluate_repository(scan_repository(tmp_path))
+
+    assert checks[1].id == "license"
+    assert checks[1].status is CheckStatus.PASS
