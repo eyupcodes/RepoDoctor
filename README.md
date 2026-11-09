@@ -104,7 +104,7 @@ repodoctor check examples/risky-repository
 | Check ID | Description | Pass Condition | Failure Penalty |
 |----------|-------------|----------------|-----------------|
 | `readme` | Project documentation | Exact root file: `README`, `README.md`, `README.txt`, `README.rst` | -15 |
-| `license` | Open source / project license | Exact root file: `LICENSE`, `LICENCE`, `LICENSE.md`, `LICENSE.txt` | -15 |
+| `license` | Open source / project license | Exact root file: `LICENSE`, `LICENCE`, `COPYING`, `UNLICENSE`, `LICENSE-MIT` or `LICENSE-APACHE` (each also with `.md`/`.txt`) | -15 |
 | `gitignore` | VCS ignore patterns | Root `.gitignore` exists | -15 |
 | `tests` | Automated test suite | Root directory `tests/`, `test/`, or `__tests__/` exists | -15 |
 | `ci` | Continuous integration | Active workflow in `.github/workflows/*.yml` or `*.yaml`, or a root `.gitlab-ci.yml`, `.circleci/config.yml`, `azure-pipelines.yml`, `Jenkinsfile`, `.travis.yml` or `bitbucket-pipelines.yml` | -15 |

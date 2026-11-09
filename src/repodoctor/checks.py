@@ -3,15 +3,13 @@ import re
 from repodoctor.models import CheckResult, CheckStatus, RepositorySnapshot
 
 _README_NAMES = frozenset({"README", "README.MD", "README.TXT", "README.RST"})
+_LICENSE_BASES = ("LICENSE", "LICENCE", "COPYING", "UNLICENSE")
 _LICENSE_NAMES = frozenset(
-    {
-        "LICENSE",
-        "LICENCE",
-        "LICENSE.MD",
-        "LICENCE.MD",
-        "LICENSE.TXT",
-        "LICENCE.TXT",
-    }
+    f"{base}{ext}" for base in _LICENSE_BASES for ext in ("", ".MD", ".TXT")
+) | frozenset(
+    f"{base}{ext}"
+    for base in ("LICENSE-MIT", "LICENSE-APACHE")
+    for ext in ("", ".MD", ".TXT")
 )
 
 
