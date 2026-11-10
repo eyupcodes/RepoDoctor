@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- CI runs `mypy --strict` on `src`; `mypy` is part of the `dev` extras (#45).
+
 ### Fixed
 
 - The `license` check accepts `COPYING`, `UNLICENSE`, `LICENSE-MIT` and `LICENSE-APACHE` at the repository root instead of reporting a missing license (#43).
