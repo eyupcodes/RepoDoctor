@@ -19,11 +19,17 @@ dependencies = [
 dev = [
   "pytest>=9,<10",
   "pytest-cov>=7,<8",
+  "mypy>=1.10",
   "ruff>=0.13,<1",
 ]
 
 [project.scripts]
 repodoctor = "repodoctor.cli:app"
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+files = ["src"]
 
 [tool.pytest.ini_options]
 addopts = ["--import-mode=importlib", "-ra", "--strict-config"]

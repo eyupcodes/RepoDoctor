@@ -22,6 +22,8 @@ jobs:
         run: ruff format --check .
       - name: Lint
         run: ruff check .
+      - name: Type check
+        run: mypy
       - name: Test
         run: pytest --cov=repodoctor --cov-branch --cov-fail-under=80
       - name: Smoke test module entrypoint
