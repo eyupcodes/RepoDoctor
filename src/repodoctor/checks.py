@@ -112,8 +112,12 @@ URL_PASSWORD_PLACEHOLDER = re.compile(
 )
 # A line carrying this marker (usually in a comment) was reviewed and is skipped.
 IGNORE_MARKER = "repodoctor: ignore"
+# Template expressions (``${{ secrets.X }}``, ``{{ vault_x }}``) and command
+# substitutions (``$(cat file)``, backticks) compute the value instead of containing it.
 PLACEHOLDERS = re.compile(
-    r"^(?:example|changeme|placeholder|your[_-].*|<.*>|\$\{?\w+\}?)$", re.IGNORECASE
+    r"^(?:example|changeme|placeholder|your[_-].*|<.*>|\$\{?\w+\}?"
+    r"|\$?\{\{.*|\$\(.*|`.*)$",
+    re.IGNORECASE,
 )
 
 
