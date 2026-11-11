@@ -242,6 +242,8 @@ def _secret_paths(tmp_path, name: str, line: str) -> tuple[str, ...]:
         '{"api_key": "abcd1234efgh"}',
         '  "password": "hunter2hunter2",',
         "'client_secret': 'abcd1234',",
+        'password = "{notatemplate"',
+        'password = "abc$(def"',
     ],
 )
 def test_hardcoded_credentials_are_still_risks(tmp_path, line):
@@ -263,6 +265,12 @@ def test_hardcoded_credentials_are_still_risks(tmp_path, line):
         '{"api_key": "${API_KEY}"}',
         '  "password": os.getenv("PW"),',
         '  "max_tokens": 100,',
+        'token: "${{ secrets.GITHUB_TOKEN }}"',
+        "password: '${{ secrets.DB_PASSWORD }}'",
+        'client_secret: "{{ vault_secret }}"',
+        "password: {{ vault_password }}",
+        "export TOKEN=$(cat /run/secrets/token)",
+        "TOKEN=`cat token.txt`",
     ],
 )
 def test_secret_references_are_not_risks(tmp_path, line):
