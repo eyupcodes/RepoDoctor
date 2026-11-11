@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `secret-risk` no longer reports quoted template expressions (`token: "${{ secrets.GITHUB_TOKEN }}"`, Jinja `{{ var }}`) or command substitutions (`$(cat file)`, backticks) as credential assignments (#47).
 - The `license` check accepts `COPYING`, `UNLICENSE`, `LICENSE-MIT` and `LICENSE-APACHE` at the repository root instead of reporting a missing license (#43).
 
 ### Added
