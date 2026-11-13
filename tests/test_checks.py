@@ -244,6 +244,12 @@ def _secret_paths(tmp_path, name: str, line: str) -> tuple[str, ...]:
         "'client_secret': 'abcd1234',",
         'password = "{notatemplate"',
         'password = "abc$(def"',
+        "  - DB_PASSWORD=hunter2hunter2",
+        "- 'api_key': 'abcd1234efgh'",
+        "apiKey: 'abcd1234efgh5678abcd'",
+        '{"apiKey": "abcd1234efgh5678abcd"}',
+        "passwd=abcd1234efgh",
+        "  - AWS_ACCESSKEY=abcd1234efgh",
     ],
 )
 def test_hardcoded_credentials_are_still_risks(tmp_path, line):
@@ -271,6 +277,11 @@ def test_hardcoded_credentials_are_still_risks(tmp_path, line):
         "password: {{ vault_password }}",
         "export TOKEN=$(cat /run/secrets/token)",
         "TOKEN=`cat token.txt`",
+        "  - API_KEY=changeme",
+        "apiKey: ${API_KEY}",
+        "- DB_PASSWORD=${DB_PASSWORD}",
+        "apiKey: process.env.API_KEY",
+        "passwd=$PASSWD",
     ],
 )
 def test_secret_references_are_not_risks(tmp_path, line):
