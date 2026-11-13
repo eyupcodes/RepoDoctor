@@ -75,12 +75,14 @@ STRUCTURAL_CHECKS = (
     ),
 )
 # Match assignments like KEY=VALUE, KEY: VALUE, optionally prefixed with `export`,
-# where KEY contains a high-signal secret indicator. Broadened from the original
-# narrow list to cover GITHUB_TOKEN, AWS_SECRET_ACCESS_KEY, CLIENT_SECRET, etc.
+# where KEY contains a high-signal secret indicator (``API_KEY`` and ``apiKey``
+# alike). Broadened from the original narrow list to cover GITHUB_TOKEN,
+# AWS_SECRET_ACCESS_KEY, CLIENT_SECRET, etc.
 # The key may be quoted, as in JSON or a Python dict literal (``"api_key": "..."``),
-# including a single-line object that opens with ``{``.
+# including a single-line object that opens with ``{`` or a YAML list item
+# (``- KEY=v``).
 CREDENTIAL_PATTERN = re.compile(
-    r"^\s*(?:export\s+|\{\s*)?[\"']?[A-Z0-9_.-]*?(?:API_KEY|SECRET|TOKEN|PASSWORD|ACCESS_KEY|PRIVATE_KEY|DATABASE_URL)\b[\"']?\s*[:=]\s*[\"']?([^\"'\s#;]+)",
+    r"^\s*(?:-\s+)?(?:export\s+|\{\s*)?[\"']?[A-Z0-9_.-]*?(?:API_?KEY|SECRET|TOKEN|PASSWORD|PASSWD|ACCESS_?KEY|PRIVATE_?KEY|DATABASE_URL)\b[\"']?\s*[:=]\s*[\"']?([^\"'\s#;]+)",
     re.IGNORECASE,
 )
 PRIVATE_KEY_PATTERN = re.compile(r"-----BEGIN (?:[A-Z0-9 ]+ )?PRIVATE KEY-----")
@@ -123,9 +125,10 @@ PLACEHOLDERS = re.compile(
 
 # Unquoted right-hand sides that reference a secret instead of containing one:
 # GitHub Actions expressions, calls and subscripts (``os.getenv(``, ``os.environ[``),
-# null/boolean literals and bare type annotations (``token: str = None``).
+# ``process.env.X``, null/boolean literals and bare type annotations
+# (``token: str = None``).
 REFERENCE_VALUE = re.compile(
-    r"\$\{\{|[A-Za-z_][\w.]*\s*[(\[]|(?:none|null|nil|true|false|str|int|bool|bytes)\b",
+    r"\$\{\{|(?:process|import\.meta)\.env\.|[A-Za-z_][\w.]*\s*[(\[]|(?:none|null|nil|true|false|str|int|bool|bytes)\b",
     re.IGNORECASE,
 )
 
