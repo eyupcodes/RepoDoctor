@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `secret-risk` now flags literal `SECRET_KEY` assignments (Django/Flask settings, `JWT_SECRET_KEY`, Rails `SECRET_KEY_BASE`); references and `SECRET_KEY_FILE` stay ignored (#51).
 - `secret-risk` now flags literal credentials in YAML list items (`- DB_PASSWORD=...`), camelCase keys (`apiKey: '...'`) and `passwd`, and ignores `process.env.X` references (#49).
 - `secret-risk` no longer reports quoted template expressions (`token: "${{ secrets.GITHUB_TOKEN }}"`, Jinja `{{ var }}`) or command substitutions (`$(cat file)`, backticks) as credential assignments (#47).
 - The `license` check accepts `COPYING`, `UNLICENSE`, `LICENSE-MIT` and `LICENSE-APACHE` at the repository root instead of reporting a missing license (#43).
