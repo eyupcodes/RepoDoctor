@@ -250,6 +250,10 @@ def _secret_paths(tmp_path, name: str, line: str) -> tuple[str, ...]:
         '{"apiKey": "abcd1234efgh5678abcd"}',
         "passwd=abcd1234efgh",
         "  - AWS_ACCESSKEY=abcd1234efgh",
+        'SECRET_KEY = "django-insecure-abcd1234efgh"',
+        "secret_key: abcd1234efgh",
+        "JWT_SECRET_KEY=abcd1234efgh",
+        "SECRET_KEY_BASE=abcd1234efgh",
     ],
 )
 def test_hardcoded_credentials_are_still_risks(tmp_path, line):
@@ -271,6 +275,10 @@ def test_hardcoded_credentials_are_still_risks(tmp_path, line):
         '{"api_key": "${API_KEY}"}',
         '  "password": os.getenv("PW"),',
         '  "max_tokens": 100,',
+        'SECRET_KEY = os.environ["SECRET_KEY"]',
+        'SECRET_KEY = config("SECRET_KEY")',
+        "SECRET_KEY=changeme",
+        "SECRET_KEY_FILE=/run/secrets/django",
         'token: "${{ secrets.GITHUB_TOKEN }}"',
         "password: '${{ secrets.DB_PASSWORD }}'",
         'client_secret: "{{ vault_secret }}"',
