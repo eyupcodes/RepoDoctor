@@ -254,6 +254,8 @@ def _secret_paths(tmp_path, name: str, line: str) -> tuple[str, ...]:
         "secret_key: abcd1234efgh",
         "JWT_SECRET_KEY=abcd1234efgh",
         "SECRET_KEY_BASE=abcd1234efgh",
+        "password: my.real.pw1",
+        'password = f"abc123xyz"',
     ],
 )
 def test_hardcoded_credentials_are_still_risks(tmp_path, line):
@@ -290,6 +292,15 @@ def test_hardcoded_credentials_are_still_risks(tmp_path, line):
         "- DB_PASSWORD=${DB_PASSWORD}",
         "apiKey: process.env.API_KEY",
         "passwd=$PASSWD",
+        "token = self.token",
+        "password = args.password,",
+        "api_key=settings.api.key",
+        'password = f"{pw}"',
+        'password = "{}"',
+        'password = "%s"',
+        'password = "%(pw)s"',
+        'secret = "******"',
+        'api_key = "xxx"',
     ],
 )
 def test_secret_references_are_not_risks(tmp_path, line):

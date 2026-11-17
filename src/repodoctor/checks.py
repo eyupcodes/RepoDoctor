@@ -82,7 +82,7 @@ STRUCTURAL_CHECKS = (
 # including a single-line object that opens with ``{`` or a YAML list item
 # (``- KEY=v``).
 CREDENTIAL_PATTERN = re.compile(
-    r"^\s*(?:-\s+)?(?:export\s+|\{\s*)?[\"']?[A-Z0-9_.-]*?(?:API_?KEY|SECRET_?KEY(?:_BASE)?|SECRET|TOKEN|PASSWORD|PASSWD|ACCESS_?KEY|PRIVATE_?KEY|DATABASE_URL)\b[\"']?\s*[:=]\s*[\"']?([^\"'\s#;]+)",
+    r"^\s*(?:-\s+)?(?:export\s+|\{\s*)?[\"']?[A-Z0-9_.-]*?(?:API_?KEY|SECRET_?KEY(?:_BASE)?|SECRET|TOKEN|PASSWORD|PASSWD|ACCESS_?KEY|PRIVATE_?KEY|DATABASE_URL)\b[\"']?\s*[:=]\s*(?:[fFrRbBuU]{0,2}[\"'])?([^\"'\s#;]+)",
     re.IGNORECASE,
 )
 PRIVATE_KEY_PATTERN = re.compile(r"-----BEGIN (?:[A-Z0-9 ]+ )?PRIVATE KEY-----")
@@ -118,7 +118,8 @@ IGNORE_MARKER = "repodoctor: ignore"
 # substitutions (``$(cat file)``, backticks) compute the value instead of containing it.
 PLACEHOLDERS = re.compile(
     r"^(?:example|changeme|placeholder|your[_-].*|<.*>|\$\{?\w+\}?"
-    r"|\$?\{\{.*|\$\(.*|`.*)$",
+    r"|\$?\{\{.*|\$\(.*|`.*"
+    r"|\{\w*\}|%s|%\(\w+\)s|\*{3,}|x{3,})$",
     re.IGNORECASE,
 )
 
@@ -126,11 +127,16 @@ PLACEHOLDERS = re.compile(
 # Unquoted right-hand sides that reference a secret instead of containing one:
 # GitHub Actions expressions, calls and subscripts (``os.getenv(``, ``os.environ[``),
 # ``process.env.X``, null/boolean literals and bare type annotations
-# (``token: str = None``).
+# (``token: str = None``). Dotted attribute chains such as ``self.token`` or
+# ``args.password`` count as references after ``=`` only (see ``_is_reference``);
+# in YAML ``key: a.b.c`` can be a real value.
 REFERENCE_VALUE = re.compile(
     r"\$\{\{|(?:process|import\.meta)\.env\.|[A-Za-z_][\w.]*\s*[(\[]|(?:none|null|nil|true|false|str|int|bool|bytes)\b",
     re.IGNORECASE,
 )
+
+
+ATTRIBUTE_CHAIN = re.compile(r"[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)+(?![\w.])")
 
 
 def _is_reference(line: str, credential: re.Match[str]) -> bool:
@@ -138,7 +144,9 @@ def _is_reference(line: str, credential: re.Match[str]) -> bool:
     start = credential.start(1)
     if start > 0 and line[start - 1] in "\"'":
         return False
-    return REFERENCE_VALUE.match(line, start) is not None
+    if REFERENCE_VALUE.match(line, start) is not None:
+        return True
+    return "=" in line[:start] and ATTRIBUTE_CHAIN.match(line, start) is not None
 
 
 def _is_placeholder_token(token: str) -> bool:
