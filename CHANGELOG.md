@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `secret-risk` flags SendGrid, Groq, DigitalOcean, Shopify and Docker Hub token formats anywhere on a line, reported without the value (#55).
+
 ### Changed
 
 - CI runs `mypy --strict` on `src`; `mypy` is part of the `dev` extras (#45).
