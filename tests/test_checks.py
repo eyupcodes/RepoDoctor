@@ -152,6 +152,11 @@ def _fake_tokens() -> dict[str, str]:
         "npm": "np" + "m_" + body,
         "gitlab": "glp" + "at-" + body[:20],
         "pypi": "py" + "pi-AgEIcHlwaS5vcmc" + body + body[:20],
+        "sendgrid": "S" + "G." + body[:22] + "." + (body * 2)[:43],
+        "groq": "gs" + "k_" + (body + body)[:48],
+        "digitalocean": "do" + "p_v1_" + "0123456789abcdef" * 4,
+        "shopify": "shp" + "at_" + "0123456789abcdef" * 2,
+        "docker_hub": "dck" + "r_pat_" + body[:27],
     }
 
 
@@ -197,7 +202,10 @@ def test_words_starting_like_new_token_prefixes_are_not_tokens(tmp_path):
     (tmp_path / "notes.md").write_text(
         "hf_model_loading_utilities_for_the_transformers_pipeline is a helper.\n"
         "Run npm_config_cache=/tmp npm ci\n"
-        "See glpat-docs for details.\n",
+        "See glpat-docs for details.\n"
+        "gsk_config_loader_for_the_groq_client is a helper.\n"
+        "dop_v1_is_the_prefix_digitalocean_uses.\n"
+        "dckr_pat_ and SG.example are only prefixes.\n",
         encoding="utf-8",
     )
 
