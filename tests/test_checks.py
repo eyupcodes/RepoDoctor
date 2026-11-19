@@ -29,6 +29,36 @@ def test_missing_structure_checks_fail(tmp_path):
     assert checks[-1].status is CheckStatus.PASS
 
 
+def _tests_status(root):
+    return {c.id: c.status for c in evaluate_repository(scan_repository(root))}["tests"]
+
+
+@pytest.mark.parametrize(
+    "directory",
+    ["spec", "specs", "packages/api/tests", "src/__tests__", "apps/web/tests"],
+)
+def test_tests_check_accepts_spec_and_nested_test_directories(tmp_path, directory):
+    (tmp_path / directory).mkdir(parents=True)
+
+    assert _tests_status(tmp_path) is CheckStatus.PASS
+
+
+@pytest.mark.parametrize(
+    "directory",
+    [
+        "src/test",
+        "docs/spec",
+        "node_modules/pkg/tests",
+        "tests_old",
+        "src/mytests",
+    ],
+)
+def test_tests_check_still_fails_without_a_real_test_directory(tmp_path, directory):
+    (tmp_path / directory).mkdir(parents=True)
+
+    assert _tests_status(tmp_path) is CheckStatus.FAIL
+
+
 def _ci_status(root):
     return next(c for c in evaluate_repository(scan_repository(root)) if c.id == "ci")
 

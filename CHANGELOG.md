@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- The `tests` check also accepts root `spec/` and `specs/` directories and `tests/` or `__tests__/` directories at any depth, so monorepos (`packages/api/tests/`) and spec-style layouts are no longer reported as having no tests (#57).
 - `secret-risk` flags SendGrid, Groq, DigitalOcean, Shopify and Docker Hub token formats anywhere on a line, reported without the value (#55).
 
 ### Changed
