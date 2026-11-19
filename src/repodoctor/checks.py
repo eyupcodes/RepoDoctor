@@ -37,6 +37,19 @@ def _has_ci(snapshot: RepositorySnapshot) -> bool:
     )
 
 
+_ROOT_TEST_DIRECTORIES = frozenset({"tests", "test", "__tests__", "spec", "specs"})
+# Names accepted at any depth; plain ``test`` is too often a fixture folder.
+_NESTED_TEST_DIRECTORIES = frozenset({"tests", "__tests__"})
+
+
+def _has_tests(snapshot: RepositorySnapshot) -> bool:
+    return any(
+        path in _ROOT_TEST_DIRECTORIES
+        or path.rpartition("/")[2] in _NESTED_TEST_DIRECTORIES
+        for path in snapshot.directories
+    )
+
+
 def _is_readme(path: str) -> bool:
     if "/" in path:
         return False
@@ -64,9 +77,7 @@ STRUCTURAL_CHECKS = (
     (
         "tests",
         "test directory",
-        lambda snapshot: any(
-            path in {"tests", "test", "__tests__"} for path in snapshot.directories
-        ),
+        _has_tests,
     ),
     (
         "ci",
