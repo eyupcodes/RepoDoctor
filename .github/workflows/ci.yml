@@ -28,3 +28,37 @@ jobs:
         run: pytest --cov=repodoctor --cov-branch --cov-fail-under=80
       - name: Smoke test module entrypoint
         run: python -m repodoctor --help
+
+  # Dogfood the composite action on the bundled example repositories.
+  action-pass:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - id: check
+        uses: ./
+        with:
+          path: examples/healthy-repository
+          sarif: "true"
+      - name: The healthy example must score 100 and produce a SARIF log
+        run: |
+          test "${{ steps.check.outputs.score }}" = "100"
+          test -s "${{ steps.check.outputs.sarif-file }}"
+
+  action-fail:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - id: check
+        uses: ./
+        continue-on-error: true
+        with:
+          path: examples/risky-repository
+          min-score: "90"
+      - name: The risky example must be caught
+        run: test "${{ steps.check.outcome }}" = "failure"
