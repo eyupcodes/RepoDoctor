@@ -126,6 +126,43 @@ With `--min-score N` (0-100) warnings alone no longer fail the run: the exit cod
 
 ---
 
+## GitHub Action
+
+Run RepoDoctor in a workflow with the composite action in this repository:
+
+```yaml
+jobs:
+  repodoctor:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - id: doctor
+        uses: eyupcodes/RepoDoctor@main
+        with:
+          min-score: "90"
+          sarif: "true"
+      - uses: github/codeql-action/upload-sarif@v4
+        if: always()
+        with:
+          sarif_file: ${{ steps.doctor.outputs.sarif-file }}
+```
+
+| Input | Default | Meaning |
+|-------|---------|---------|
+| `path` | `.` | Repository directory to check |
+| `min-score` | empty | Same as `--min-score`; empty means any warning fails the job |
+| `sarif` | `false` | Also write a SARIF 2.1.0 log and return its path as `sarif-file` |
+
+The `score` output holds the 0-100 score. The job fails with the same exit code as `repodoctor check` (1 for failed checks or a score below `min-score`, 2 for a configuration error). Pin `@main` to a release tag or commit SHA in your own workflows.
+
+---
+
 ## Safety & Hardening Architecture
 
 RepoDoctor is strictly **read-only** and bounded against common static analysis attack vectors and resource exhaustion:
