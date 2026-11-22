@@ -91,9 +91,14 @@ STRUCTURAL_CHECKS = (
 # AWS_SECRET_ACCESS_KEY, CLIENT_SECRET, SECRET_KEY (Django/Flask), etc.
 # The key may be quoted, as in JSON or a Python dict literal (``"api_key": "..."``),
 # including a single-line object that opens with ``{`` or a YAML list item
-# (``- KEY=v``).
+# (``- KEY=v``). A declaration may start with modifiers (``const``, ``final``,
+# ``private static``...), a ``String`` type or a PHP ``$``, and the key may carry a
+# type annotation (``password: str = "..."``).
 CREDENTIAL_PATTERN = re.compile(
-    r"^\s*(?:-\s+)?(?:export\s+|\{\s*)?[\"']?[A-Z0-9_.-]*?(?:API_?KEY|SECRET_?KEY(?:_BASE)?|SECRET|TOKEN|PASSWORD|PASSWD|ACCESS_?KEY|PRIVATE_?KEY|DATABASE_URL)\b[\"']?\s*[:=]\s*(?:[fFrRbBuU]{0,2}[\"'])?([^\"'\s#;]+)",
+    r"^\s*(?:-\s+)?(?:\{\s*|(?:(?:export|const|let|var|val|final|static|private|public|protected|readonly)\s+)*(?:(?:String|string|str)\s+)?)"
+    r"\$?[\"']?[A-Z0-9_.-]*?(?:API_?KEY|SECRET_?KEY(?:_BASE)?|SECRET|TOKEN|PASSWORD|PASSWD|ACCESS_?KEY|PRIVATE_?KEY|DATABASE_URL)\b[\"']?"
+    r"(?:\s*:\s*[A-Za-z_][\w.]*(?:\[[\w., ]*\])?(?=\s*=))?"
+    r"\s*[:=]\s*(?:[fFrRbBuU]{0,2}[\"'])?([^\"'\s#;]+)",
     re.IGNORECASE,
 )
 PRIVATE_KEY_PATTERN = re.compile(r"-----BEGIN (?:[A-Z0-9 ]+ )?PRIVATE KEY-----")
@@ -142,12 +147,13 @@ PLACEHOLDERS = re.compile(
 
 # Unquoted right-hand sides that reference a secret instead of containing one:
 # GitHub Actions expressions, calls and subscripts (``os.getenv(``, ``os.environ[``),
-# ``process.env.X``, null/boolean literals and bare type annotations
+# ``process.env.X``, PHP/shell variables (``$_ENV[...]``), ``await``/``new`` and
+# similar computed values, null/boolean literals and bare type annotations
 # (``token: str = None``). Dotted attribute chains such as ``self.token`` or
 # ``args.password`` count as references after ``=`` only (see ``_is_reference``);
 # in YAML ``key: a.b.c`` can be a real value.
 REFERENCE_VALUE = re.compile(
-    r"\$\{\{|(?:process|import\.meta)\.env\.|[A-Za-z_][\w.]*\s*[(\[]|(?:none|null|nil|true|false|str|int|bool|bytes)\b",
+    r"\$\{\{|(?:process|import\.meta)\.env\.|(?:await|new|function|lambda)\b|\$[A-Za-z_]|[A-Za-z_][\w.]*\s*[(\[]|(?:none|null|nil|true|false|str|int|bool|bytes)\b",
     re.IGNORECASE,
 )
 
