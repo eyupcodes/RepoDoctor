@@ -307,11 +307,29 @@ def _secret_paths(tmp_path, name: str, line: str) -> tuple[str, ...]:
         'let token: string = "abc12345xyz"',
         "const token = newtoken123;",
         'self.password: Optional[str] = "realpass1"',
+        "x-api-key: abcd1234efgh5678",
+        '{"X-API-Key": "abcd1234efgh5678"}',
+        "SECRET-KEY: abcd1234efgh",
+        "ENV DB_PASSWORD=realpass1",
+        "ARG TOKEN=abcd1234efgh",
     ],
 )
 def test_hardcoded_credentials_are_still_risks(tmp_path, line):
     assert _secret_paths(tmp_path, "settings.txt", line) == (
         "settings.txt:1 (credential assignment)",
+    )
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        "Authorization: Bearer eyJhbGciOiJIUzI1NiJ9abc123",
+        'curl -H "Authorization: Bearer 9f8a7b6c5d4e3f2a1b0c" https://api.example.com',
+    ],
+)
+def test_literal_bearer_tokens_are_risks(tmp_path, line):
+    assert _secret_paths(tmp_path, "client.txt", line) == (
+        "client.txt:1 (bearer token)",
     )
 
 
@@ -364,6 +382,16 @@ def test_hardcoded_credentials_are_still_risks(tmp_path, line):
         "$password = $_ENV['PASSWORD'];",
         "password: str = None",
         "token: string = null",
+        "ARG TOKEN=${TOKEN}",
+        "ENV API_KEY=changeme",
+        "x-api-key: ${API_KEY}",
+        '{"X-API-Key": os.environ["KEY"]}',
+        "Authorization: Bearer ${TOKEN}",
+        "Authorization: Bearer <token>",
+        'headers = {"Authorization": f"Bearer {token}"}',
+        "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE1",
+        "Authorization: Bearer abcdefghijklmnopqrstuvwxyz",
+        "Bearer xxxxxxxxxxxxxxxxxxxxxxx1",
     ],
 )
 def test_secret_references_are_not_risks(tmp_path, line):

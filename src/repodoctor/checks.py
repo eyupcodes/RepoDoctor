@@ -93,10 +93,10 @@ STRUCTURAL_CHECKS = (
 # including a single-line object that opens with ``{`` or a YAML list item
 # (``- KEY=v``). A declaration may start with modifiers (``const``, ``final``,
 # ``private static``...), a ``String`` type or a PHP ``$``, and the key may carry a
-# type annotation (``password: str = "..."``).
+# type annotation (``password: str = "..."``); ``ENV``/``ARG`` cover Dockerfiles.
 CREDENTIAL_PATTERN = re.compile(
-    r"^\s*(?:-\s+)?(?:\{\s*|(?:(?:export|const|let|var|val|final|static|private|public|protected|readonly)\s+)*(?:(?:String|string|str)\s+)?)"
-    r"\$?[\"']?[A-Z0-9_.-]*?(?:API_?KEY|SECRET_?KEY(?:_BASE)?|SECRET|TOKEN|PASSWORD|PASSWD|ACCESS_?KEY|PRIVATE_?KEY|DATABASE_URL)\b[\"']?"
+    r"^\s*(?:-\s+)?(?:\{\s*|(?:(?:export|const|let|var|val|final|static|private|public|protected|readonly|ENV|ARG)\s+)*(?:(?:String|string|str)\s+)?)"
+    r"\$?[\"']?[A-Z0-9_.-]*?(?:API[_-]?KEY|SECRET[_-]?KEY(?:_BASE)?|SECRET|TOKEN|PASSWORD|PASSWD|ACCESS[_-]?KEY|PRIVATE[_-]?KEY|DATABASE_URL)\b[\"']?"
     r"(?:\s*:\s*[A-Za-z_][\w.]*(?:\[[\w., ]*\])?(?=\s*=))?"
     r"\s*[:=]\s*(?:[fFrRbBuU]{0,2}[\"'])?([^\"'\s#;]+)",
     re.IGNORECASE,
@@ -121,6 +121,13 @@ KNOWN_TOKEN_PATTERN = re.compile(
     r"|\bshp(?:at|ca|pa)_[a-f0-9]{32}\b"
     r"|\bdckr_pat_[A-Za-z0-9_-]{20,}"
 )
+# A literal bearer token (``Authorization: Bearer <token>``). Templates (``${T}``,
+# ``{token}``, ``<token>``) fall outside the character class; requiring a digit keeps
+# plain words and identifiers out.
+BEARER_PATTERN = re.compile(
+    r"\bBearer\s+((?=[A-Za-z0-9._~+/=-]*\d)[A-Za-z0-9._~+/=-]{20,})"
+)
+BEARER_PLACEHOLDER = re.compile(r"^(?:your|example|changeme|token|xxx)", re.IGNORECASE)
 # ``scheme://[user]:password@host`` with a literal password. The password may not
 # contain ``/``, ``@`` or whitespace; ``user@host`` and ``host:port`` never match.
 URL_PASSWORD_PATTERN = re.compile(
@@ -205,6 +212,15 @@ def _secret_result(snapshot: RepositorySnapshot) -> CheckResult:
                 ),
                 None,
             )
+            bearer = next(
+                (
+                    m
+                    for m in BEARER_PATTERN.finditer(line)
+                    if not BEARER_PLACEHOLDER.match(m.group(1))
+                    and not _is_placeholder_token(m.group(1))
+                ),
+                None,
+            )
             credential = CREDENTIAL_PATTERN.search(line)
             url_password = next(
                 (
@@ -218,6 +234,8 @@ def _secret_result(snapshot: RepositorySnapshot) -> CheckResult:
                 findings.add((content.path, line_number, "private key"))
             elif known_token:
                 findings.add((content.path, line_number, "known token format"))
+            elif bearer:
+                findings.add((content.path, line_number, "bearer token"))
             elif (
                 credential
                 and not PLACEHOLDERS.match(credential.group(1))
