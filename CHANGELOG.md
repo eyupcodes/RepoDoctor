@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `secret-risk` flags literal credentials in declarations: `const`/`let`/`var`/`final`/`static`/`private` modifiers, a `String` type, PHP `$password = "..."` and typed keys (`password: str = "..."`); `await`/`new`/`function` and `$VAR` values count as references (#61).
 - A composite GitHub Action (`uses: eyupcodes/RepoDoctor@...`) runs `repodoctor check` with `path`, `min-score` and `sarif` inputs and `score` / `sarif-file` outputs; CI runs it against the bundled examples (#59).
 - The `tests` check also accepts root `spec/` and `specs/` directories and `tests/` or `__tests__/` directories at any depth, so monorepos (`packages/api/tests/`) and spec-style layouts are no longer reported as having no tests (#57).
 - `secret-risk` flags SendGrid, Groq, DigitalOcean, Shopify and Docker Hub token formats anywhere on a line, reported without the value (#55).
