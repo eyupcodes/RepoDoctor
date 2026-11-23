@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `secret-risk` flags literal credentials in keyword arguments and inline dict entries anywhere on a line (`connect(password="...")`, `{"token": "..."}`); references, templates, comparisons and prompts stay clean (#65).
 - `secret-risk` flags literal credentials under hyphenated keys (`x-api-key: ...`), in Dockerfile `ENV`/`ARG` lines and as a literal `Bearer <token>`; templates and `your_...` placeholders stay clean (#63).
 - `secret-risk` flags literal credentials in declarations: `const`/`let`/`var`/`final`/`static`/`private` modifiers, a `String` type, PHP `$password = "..."` and typed keys (`password: str = "..."`); `await`/`new`/`function` and `$VAR` values count as references (#61).
 - A composite GitHub Action (`uses: eyupcodes/RepoDoctor@...`) runs `repodoctor check` with `path`, `min-score` and `sarif` inputs and `score` / `sarif-file` outputs; CI runs it against the bundled examples (#59).
