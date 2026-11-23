@@ -401,6 +401,27 @@ def test_secret_references_are_not_risks(tmp_path, line):
 @pytest.mark.parametrize(
     "line",
     [
+        'connect(host, password=os.environ["PW"])',
+        "connect(host, password=args.password)",
+        'Client(api_key="your_api_key")',
+        'Client(api_key="${API_KEY}")',
+        'Client(token="{token}")',
+        'headers = {"token": "<token>"}',
+        'db = {"password": "%s"}',
+        'if token == "abcd1234efgh":',
+        'pw = getpass("password: ")',
+        'print("Enter your api_key: ")',
+        'login(password="")',
+        'x = {"max_tokens": "1000"}',
+    ],
+)
+def test_inline_references_and_prompts_are_not_risks(tmp_path, line):
+    assert _secret_paths(tmp_path, "client.py", line) == ()
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
         'password = "abc123xyz"  # repodoctor: ignore',
         "DB_PASSWORD=hunter2 # repodoctor: ignore",
         "-----BEGIN RSA PRIVATE KEY----- # repodoctor: ignore",
