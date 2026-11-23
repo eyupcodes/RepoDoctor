@@ -101,6 +101,15 @@ CREDENTIAL_PATTERN = re.compile(
     r"\s*[:=]\s*(?:[fFrRbBuU]{0,2}[\"'])?([^\"'\s#;]+)",
     re.IGNORECASE,
 )
+# A secret-named key with a quoted literal value anywhere on a line: keyword arguments
+# (``connect(password="...")``) and dict/object entries (``{"token": "..."}``). The
+# value must be quoted and at least four characters, which keeps comparisons
+# (``token == "x"``) and prompts (``getpass("password: ")``) out.
+INLINE_CREDENTIAL_PATTERN = re.compile(
+    r"(?<![\w.$-])[\"']?[A-Z0-9_.-]*?(?:API[_-]?KEY|SECRET[_-]?KEY(?:_BASE)?|SECRET|TOKEN|PASSWORD|PASSWD|ACCESS[_-]?KEY|PRIVATE[_-]?KEY|DATABASE_URL)\b[\"']?"
+    r"\s*[:=]\s*[fFrRbBuU]{0,2}[\"']([^\"'\s#;]{4,})",
+    re.IGNORECASE,
+)
 PRIVATE_KEY_PATTERN = re.compile(r"-----BEGIN (?:[A-Z0-9 ]+ )?PRIVATE KEY-----")
 # Provider token formats distinctive enough to flag wherever they appear on a line.
 KNOWN_TOKEN_PATTERN = re.compile(
@@ -222,6 +231,14 @@ def _secret_result(snapshot: RepositorySnapshot) -> CheckResult:
                 None,
             )
             credential = CREDENTIAL_PATTERN.search(line)
+            inline_credential = next(
+                (
+                    m
+                    for m in INLINE_CREDENTIAL_PATTERN.finditer(line)
+                    if not PLACEHOLDERS.match(m.group(1))
+                ),
+                None,
+            )
             url_password = next(
                 (
                     m
@@ -241,6 +258,8 @@ def _secret_result(snapshot: RepositorySnapshot) -> CheckResult:
                 and not PLACEHOLDERS.match(credential.group(1))
                 and not _is_reference(line, credential)
             ):
+                findings.add((content.path, line_number, "credential assignment"))
+            elif inline_credential:
                 findings.add((content.path, line_number, "credential assignment"))
             elif url_password:
                 findings.add((content.path, line_number, "url credential"))

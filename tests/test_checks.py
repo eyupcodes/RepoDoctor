@@ -401,6 +401,51 @@ def test_secret_references_are_not_risks(tmp_path, line):
 @pytest.mark.parametrize(
     "line",
     [
+        'connect(host, password="s3cret!pw")',
+        "client = Client(api_key='abcd1234efgh')",
+        'settings = dict(token="abcd1234efgh")',
+        'db = {"password": "s3cret!pw"}',
+        'x = {"a": 1, "api_key": "abcd1234efgh"}',
+        "const c = { apiKey: 'abcd1234efgh' };",
+        'requests.get(url, params={"access_key": "abcd1234efgh"})',
+    ],
+)
+def test_inline_literal_credentials_are_risks(tmp_path, line):
+    assert _secret_paths(tmp_path, "client.py", line) == (
+        "client.py:1 (credential assignment)",
+    )
+
+
+def test_inline_credential_value_is_never_printed(tmp_path):
+    (tmp_path / "client.py").write_text('connect(password="zzqq9981")\n')
+    result = evaluate_repository(scan_repository(tmp_path))[-1]
+    assert "zzqq9981" not in repr(result)
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        'connect(host, password=os.environ["PW"])',
+        "connect(host, password=args.password)",
+        'Client(api_key="your_api_key")',
+        'Client(api_key="${API_KEY}")',
+        'Client(token="{token}")',
+        'headers = {"token": "<token>"}',
+        'db = {"password": "%s"}',
+        'if token == "abcd1234efgh":',
+        'pw = getpass("password: ")',
+        'print("Enter your api_key: ")',
+        'login(password="")',
+        'x = {"max_tokens": "1000"}',
+    ],
+)
+def test_inline_references_and_prompts_are_not_risks(tmp_path, line):
+    assert _secret_paths(tmp_path, "client.py", line) == ()
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
         'password = "abc123xyz"  # repodoctor: ignore',
         "DB_PASSWORD=hunter2 # repodoctor: ignore",
         "-----BEGIN RSA PRIVATE KEY----- # repodoctor: ignore",
