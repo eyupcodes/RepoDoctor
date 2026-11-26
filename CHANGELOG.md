@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `secret-risk` flags Slack and Discord webhook URLs and Telegram, Twilio and Mailgun token formats, reported without the value; documentation placeholders such as `T00000000/B00000000/XXXX` stay clean (#67).
 - `secret-risk` flags literal credentials in keyword arguments and inline dict entries anywhere on a line (`connect(password="...")`, `{"token": "..."}`); references, templates, comparisons and prompts stay clean (#65).
 - `secret-risk` flags literal credentials under hyphenated keys (`x-api-key: ...`), in Dockerfile `ENV`/`ARG` lines and as a literal `Bearer <token>`; templates and `your_...` placeholders stay clean (#63).
 - `secret-risk` flags literal credentials in declarations: `const`/`let`/`var`/`final`/`static`/`private` modifiers, a `String` type, PHP `$password = "..."` and typed keys (`password: str = "..."`); `await`/`new`/`function` and `$VAR` values count as references (#61).

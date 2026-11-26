@@ -187,6 +187,15 @@ def _fake_tokens() -> dict[str, str]:
         "digitalocean": "do" + "p_v1_" + "0123456789abcdef" * 4,
         "shopify": "shp" + "at_" + "0123456789abcdef" * 2,
         "docker_hub": "dck" + "r_pat_" + body[:27],
+        "slack_webhook": "https://hooks.slack"
+        + ".com/services/T0A1B2C3D/B4E5F6G7H/"
+        + body[:24],
+        "discord_webhook": "https://discord"
+        + ".com/api/webhooks/123456789012345678/"
+        + (body * 2)[:68],
+        "telegram": "123456789:" + "AA" + body[:33],
+        "twilio": "S" + "K" + "0123456789abcdef" * 2,
+        "mailgun": "ke" + "y-" + "0123456789abcdef" * 2,
     }
 
 
@@ -235,7 +244,21 @@ def test_words_starting_like_new_token_prefixes_are_not_tokens(tmp_path):
         "See glpat-docs for details.\n"
         "gsk_config_loader_for_the_groq_client is a helper.\n"
         "dop_v1_is_the_prefix_digitalocean_uses.\n"
-        "dckr_pat_ and SG.example are only prefixes.\n",
+        "dckr_pat_ and SG.example are only prefixes.\n"
+        "Create a hooks.slack.com/services/ URL in the Slack admin page.\n"
+        "The discord.com/api/webhooks/ endpoint takes an id and a token.\n"
+        "key-value pairs and SKU0123 are not tokens; 12:30:45 is a time.\n",
+        encoding="utf-8",
+    )
+
+    assert evaluate_repository(scan_repository(tmp_path))[-1].status is CheckStatus.PASS
+
+
+def test_webhook_placeholders_are_not_risks(tmp_path):
+    make_healthy_repository(tmp_path)
+    (tmp_path / "docs.md").write_text(
+        "https://hooks.slack" + ".com/services/T00000000/B00000000/" + "X" * 24 + "\n"
+        "https://discord" + ".com/api/webhooks/000000000000000000/" + "x" * 68 + "\n",
         encoding="utf-8",
     )
 

@@ -129,6 +129,14 @@ KNOWN_TOKEN_PATTERN = re.compile(
     r"|\bdo[por]_v1_[a-f0-9]{64}\b"
     r"|\bshp(?:at|ca|pa)_[a-f0-9]{32}\b"
     r"|\bdckr_pat_[A-Za-z0-9_-]{20,}"
+    r"|\bSK[0-9a-f]{32}\b"
+    r"|\bkey-[0-9a-f]{32}\b"
+    r"|\b[0-9]{8,10}:AA[A-Za-z0-9_-]{33}\b"
+    # Webhook URLs: only the secret part is matched, so the placeholder check sees
+    # ``T00000000/B00000000/XXXX`` and not the host name.
+    r"|(?<=hooks\.slack\.com/services/)T[A-Z0-9]{8,}/B[A-Z0-9]{8,}/[A-Za-z0-9]{24}\b"
+    r"|(?:(?<=discord\.com/api/webhooks/)|(?<=discordapp\.com/api/webhooks/))"
+    r"[0-9]{17,20}/[A-Za-z0-9_-]{60,}"
 )
 # A literal bearer token (``Authorization: Bearer <token>``). Templates (``${T}``,
 # ``{token}``, ``<token>``) fall outside the character class; requiring a digit keeps
