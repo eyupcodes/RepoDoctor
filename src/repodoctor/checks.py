@@ -1,4 +1,6 @@
 import re
+from fnmatch import fnmatchcase
+from pathlib import PurePosixPath
 
 from repodoctor.models import CheckResult, CheckStatus, RepositorySnapshot
 
@@ -200,6 +202,63 @@ def _is_placeholder_token(token: str) -> bool:
     return len(set(token)) < 10
 
 
+# Environment files are named ``.env``, ``.env.<name>`` or ``<name>.env``; the
+# suffixes below mark committed templates that hold no real values.
+_ENV_TEMPLATE_SUFFIXES = frozenset(
+    {"example", "sample", "template", "dist", "defaults"}
+)
+
+
+def _is_env_file(name: str) -> bool:
+    lowered = name.lower()
+    if lowered == ".env" or (lowered.endswith(".env") and len(lowered) > 4):
+        return True
+    return (
+        lowered.startswith(".env.")
+        and lowered.rpartition(".")[2] not in _ENV_TEMPLATE_SUFFIXES
+    )
+
+
+def _gitignore_matches(pattern: str, relative: str) -> bool:
+    """Whether one ``.gitignore`` pattern matches ``relative`` (a posix path)."""
+    pattern = pattern.rstrip()
+    if pattern.endswith("/"):
+        return False  # directory rules never name a file here
+    anchored = "/" in pattern.lstrip("/")
+    pattern = pattern.lstrip("/")
+    if pattern.startswith("**/"):
+        pattern, anchored = pattern[3:], False
+    target = relative if anchored else PurePosixPath(relative).name
+    return fnmatchcase(target, pattern)
+
+
+def _is_gitignored(snapshot: RepositorySnapshot, path: str) -> bool:
+    """Approximate git: each ``.gitignore`` on the way down, last matching rule wins."""
+    rules = {content.path: content.lines for content in snapshot.contents}
+    parts = PurePosixPath(path).parts
+    ignored = False
+    for depth in range(len(parts)):
+        directory = "/".join(parts[:depth])
+        gitignore = f"{directory}/.gitignore" if directory else ".gitignore"
+        relative = "/".join(parts[depth:])
+        for line in rules.get(gitignore, ()):
+            rule = line.strip()
+            if not rule or rule.startswith("#"):
+                continue
+            negated = rule.startswith("!")
+            if _gitignore_matches(rule[1:] if negated else rule, relative):
+                ignored = not negated
+    return ignored
+
+
+def _unignored_env_files(snapshot: RepositorySnapshot) -> tuple[str, ...]:
+    return tuple(
+        f"{path} (environment file not excluded by .gitignore)"
+        for path in snapshot.files
+        if _is_env_file(PurePosixPath(path).name) and not _is_gitignored(snapshot, path)
+    )
+
+
 def _structural_results(snapshot: RepositorySnapshot) -> tuple[CheckResult, ...]:
     results = []
     for identifier, label, predicate in STRUCTURAL_CHECKS:
@@ -281,6 +340,14 @@ def _secret_result(snapshot: RepositorySnapshot) -> CheckResult:
                 f"{path}:{line_number} ({kind})"
                 for path, line_number, kind in sorted(findings)
             ),
+        )
+    unignored_env = _unignored_env_files(snapshot)
+    if unignored_env:
+        return CheckResult(
+            id="secret-risk",
+            status=CheckStatus.WARNING,
+            summary="Environment files are not excluded by .gitignore.",
+            paths=(*unignored_env, *snapshot.diagnostics),
         )
     if snapshot.diagnostics:
         return CheckResult(
