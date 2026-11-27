@@ -585,3 +585,92 @@ def test_conventional_license_names_satisfy_license_check(tmp_path, name):
 
     assert checks[1].id == "license"
     assert checks[1].status is CheckStatus.PASS
+
+
+def _secret_check(root):
+    return evaluate_repository(scan_repository(root))[-1]
+
+
+def test_unignored_env_file_is_a_warning_without_its_content(tmp_path):
+    make_healthy_repository(tmp_path)
+    (tmp_path / ".gitignore").write_text("*.pyc\n", encoding="utf-8")
+    (tmp_path / ".env").write_text("DB_HOST=internal-db\n", encoding="utf-8")
+
+    check = _secret_check(tmp_path)
+
+    assert check.status is CheckStatus.WARNING
+    assert check.paths == (".env (environment file not excluded by .gitignore)",)
+    assert "internal-db" not in repr(check)
+
+
+def test_ignored_env_file_is_clean(tmp_path):
+    make_healthy_repository(tmp_path)
+    (tmp_path / ".env").write_text("DB_HOST=internal-db\n", encoding="utf-8")
+
+    assert _secret_check(tmp_path).status is CheckStatus.PASS
+
+
+@pytest.mark.parametrize(
+    "name",
+    [".env.example", ".env.sample", ".env.template", ".env.dist", ".ENV.EXAMPLE"],
+)
+def test_env_templates_are_not_reported(tmp_path, name):
+    make_healthy_repository(tmp_path)
+    (tmp_path / ".gitignore").write_text("*.pyc\n", encoding="utf-8")
+    (tmp_path / name).write_text("DB_HOST=\n", encoding="utf-8")
+
+    assert _secret_check(tmp_path).status is CheckStatus.PASS
+
+
+@pytest.mark.parametrize(
+    ("rules", "reported"),
+    [
+        (".env\n", False),
+        (".env*\n!.env.example\n", False),
+        ("*.env\n.env.*\n", False),
+        ("/.env\n", False),
+        ("**/.env\n", False),
+        ("# .env\n", True),
+        (".env\n!.env\n", True),
+        ("/other/.env\n", True),
+        (".env/\n", True),
+        ("", True),
+    ],
+)
+def test_gitignore_rules_decide_whether_env_is_reported(tmp_path, rules, reported):
+    make_healthy_repository(tmp_path)
+    (tmp_path / ".gitignore").write_text(rules, encoding="utf-8")
+    (tmp_path / ".env").write_text("A=1\n", encoding="utf-8")
+
+    status = _secret_check(tmp_path).status
+
+    assert (status is CheckStatus.WARNING) is reported
+
+
+def test_env_variants_in_subdirectories_follow_their_own_gitignore(tmp_path):
+    make_healthy_repository(tmp_path)
+    (tmp_path / ".gitignore").write_text("*.pyc\n", encoding="utf-8")
+    for package in ("api", "web"):
+        (tmp_path / package).mkdir()
+        (tmp_path / package / ".env.local").write_text("A=1\n", encoding="utf-8")
+    (tmp_path / "web" / "production.env").write_text("A=1\n", encoding="utf-8")
+    (tmp_path / "api" / ".gitignore").write_text(".env.*\n", encoding="utf-8")
+
+    check = _secret_check(tmp_path)
+
+    assert check.status is CheckStatus.WARNING
+    assert check.paths == (
+        "web/.env.local (environment file not excluded by .gitignore)",
+        "web/production.env (environment file not excluded by .gitignore)",
+    )
+
+
+def test_secret_findings_still_fail_with_an_unignored_env_file(tmp_path):
+    make_healthy_repository(tmp_path)
+    (tmp_path / ".gitignore").write_text("*.pyc\n", encoding="utf-8")
+    (tmp_path / ".env").write_text("API_KEY=abc123def456\n", encoding="utf-8")
+
+    check = _secret_check(tmp_path)
+
+    assert check.status is CheckStatus.FAIL
+    assert check.paths == (".env:1 (credential assignment)",)

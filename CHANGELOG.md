@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `secret-risk` warns (-5) about environment files (`.env`, `.env.<name>`, `<name>.env`) that no applicable `.gitignore` excludes, naming the path only; templates such as `.env.example` stay clean and real credential findings still fail (#69).
 - `secret-risk` flags Slack and Discord webhook URLs and Telegram, Twilio and Mailgun token formats, reported without the value; documentation placeholders such as `T00000000/B00000000/XXXX` stay clean (#67).
 - `secret-risk` flags literal credentials in keyword arguments and inline dict entries anywhere on a line (`connect(password="...")`, `{"token": "..."}`); references, templates, comparisons and prompts stay clean (#65).
 - `secret-risk` flags literal credentials under hyphenated keys (`x-api-key: ...`), in Dockerfile `ENV`/`ARG` lines and as a literal `Bearer <token>`; templates and `your_...` placeholders stay clean (#63).
